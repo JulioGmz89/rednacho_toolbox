@@ -1,4 +1,4 @@
-﻿namespace RedNachoToolbox;
+namespace RedNachoToolbox;
 
 public partial class MainPage : ContentPage
 {
@@ -63,11 +63,20 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnSettingsClicked(object sender, EventArgs e)
+    private async void OnSettingsClicked(object sender, EventArgs e)
     {
-        // TODO: Navigate to Settings view
-        // This will be connected to the ViewModel and navigation service in future iterations
-        DisplayAlert("Navigation", "Settings selected", "OK");
+        try
+        {
+            // Navigate to SettingsPage
+            var settingsPage = new SettingsPage();
+            await Navigation.PushAsync(settingsPage);
+        }
+        catch (Exception ex)
+        {
+            // Handle navigation error gracefully
+            System.Diagnostics.Debug.WriteLine($"Navigation error: {ex.Message}");
+            await DisplayAlert("Navigation Error", "Unable to open Settings page. Please try again.", "OK");
+        }
         
         // Visual feedback - highlight the selected button
         ResetButtonStyles();

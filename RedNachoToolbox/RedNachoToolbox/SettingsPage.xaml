@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RedNachoToolbox.SettingsPage"
+             Title="Settings"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="24">
+            
+            <!-- Page Header -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Settings"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{DynamicResource TextColor}"
+                       HorizontalOptions="Start" />
+                
+                <Label Text="Customize your Red Nacho ToolBox experience"
+                       FontSize="16"
+                       TextColor="{DynamicResource TextColorSecondary}"
+                       HorizontalOptions="Start" />
+            </VerticalStackLayout>
+
+            <!-- Theme Section -->
+            <Frame BackgroundColor="{DynamicResource CardBackgroundColor}"
+                   BorderColor="{DynamicResource BorderColorLight}"
+                   CornerRadius="12"
+                   Padding="20"
+                   HasShadow="True">
+                
+                <VerticalStackLayout Spacing="16">
+                    
+                    <!-- Theme Section Header -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="🎨 Appearance"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource TextColor}" />
+                        
+                        <Label Text="Choose your preferred theme"
+                               FontSize="14"
+                               TextColor="{DynamicResource TextColorSecondary}" />
+                    </VerticalStackLayout>
+
+                    <!-- Theme Toggle Switch -->
+                    <Grid ColumnDefinitions="*, Auto" 
+                          ColumnSpacing="16">
+                        
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Dark Mode"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource TextColor}" />
+                            
+                            <Label Text="Switch between light and dark themes"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource TextColorTertiary}" />
+                        </VerticalStackLayout>
+
+                        <Switch x:Name="ThemeSwitch"
+                                Grid.Column="1"
+                                IsToggled="{Binding IsDarkTheme}"
+                                Toggled="OnThemeSwitchToggled"
+                                OnColor="{DynamicResource PrimaryRed}"
+                                ThumbColor="{DynamicResource ButtonBackgroundColor}"
+                                VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Theme Preview Cards -->
+                    <Grid ColumnDefinitions="*, *" 
+                          ColumnSpacing="12">
+                        
+                        <!-- Light Theme Preview -->
+                        <Border Grid.Column="0"
+                                BackgroundColor="#FFFFFF"
+                                Stroke="#DDDDDD"
+                                StrokeThickness="2"
+                                Padding="12">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="☀️ Light"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#000000"
+                                       HorizontalOptions="Center" />
+                                
+                                <Border BackgroundColor="#F5F5F5"
+                                        HeightRequest="20">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="4" />
+                                    </Border.StrokeShape>
+                                </Border>
+                                
+                                <Border BackgroundColor="#CC333B"
+                                        HeightRequest="12">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="2" />
+                                    </Border.StrokeShape>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Dark Theme Preview -->
+                        <Border Grid.Column="1"
+                                BackgroundColor="#1A1A1A"
+                                Stroke="#444444"
+                                StrokeThickness="2"
+                                Padding="12">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="🌙 Dark"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#FFFFFF"
+                                       HorizontalOptions="Center" />
+                                
+                                <Border BackgroundColor="#2A2A2A"
+                                        HeightRequest="20">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="4" />
+                                    </Border.StrokeShape>
+                                </Border>
+                                
+                                <Border BackgroundColor="#CC333B"
+                                        HeightRequest="12">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="2" />
+                                    </Border.StrokeShape>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Application Info Section -->
+            <Frame BackgroundColor="{DynamicResource CardBackgroundColor}"
+                   BorderColor="{DynamicResource BorderColorLight}"
+                   Padding="20"
+                   HasShadow="True">
+                
+                <VerticalStackLayout Spacing="16">
+                    
+                    <!-- App Info Header -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="ℹ️ Application Info"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource TextColor}" />
+                    </VerticalStackLayout>
+
+                    <!-- App Details -->
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="120, *" ColumnSpacing="12">
+                            <Label Grid.Column="0"
+                                   Text="Version:"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource TextColorSecondary}" />
+                            
+                            <Label Grid.Column="1"
+                                   Text="1.0.0"
+                                   FontSize="14"
+                                   TextColor="{DynamicResource TextColor}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="120, *" ColumnSpacing="12">
+                            <Label Grid.Column="0"
+                                   Text="Framework:"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource TextColorSecondary}" />
+                            
+                            <Label Grid.Column="1"
+                                   Text=".NET MAUI"
+                                   FontSize="14"
+                                   TextColor="{DynamicResource TextColor}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="120, *" ColumnSpacing="12">
+                            <Label Grid.Column="0"
+                                   Text="Developer:"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource TextColorSecondary}" />
+                            
+                            <Label Grid.Column="1"
+                                   Text="Red Nacho Team"
+                                   FontSize="14"
+                                   TextColor="{DynamicResource TextColor}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Back Button -->
+            <Button x:Name="BackButton"
+                    Text="← Back to Main"
+                    BackgroundColor="{DynamicResource PrimaryButtonBackgroundColor}"
+                    TextColor="{DynamicResource PrimaryButtonTextColor}"
+                    BorderColor="Transparent"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    HeightRequest="48"
+                    HorizontalOptions="Fill"
+                    Clicked="OnBackButtonClicked" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

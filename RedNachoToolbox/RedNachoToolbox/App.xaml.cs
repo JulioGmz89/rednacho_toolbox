@@ -6,6 +6,9 @@ public partial class App : Application
     {
         InitializeComponent();
 
+        // Apply saved theme preference at startup
+        SettingsPage.ApplySavedTheme();
+
         MainPage = new AppShell();
     }
 }

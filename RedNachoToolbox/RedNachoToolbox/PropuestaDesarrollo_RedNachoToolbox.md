@@ -117,55 +117,72 @@ La solución adopta patrones modernos para asegurar mantenibilidad y escalabilid
 
 ## 3. Plan de implementación de características
 
-### 3.1. Gestión de Temas (Light/Dark Mode)
+### 3.1. Gestión de Temas (Light/Dark Mode) - ✅ IMPLEMENTADO
 
-La solución actual utiliza AppThemeBinding y recursos en `Resources/Styles/Colors.xaml` y `Resources/Styles/Styles.xaml` para soportar modo claro/oscuro sin cambiar diccionarios en tiempo de ejecución.
+**Estado**: Completamente implementado con funcionalidad avanzada de cambio de tema en tiempo real.
 
-Pasos recomendados:
+**Implementación Final**:
 
-1. Definir colores temáticos con `AppThemeBinding` en `Colors.xaml`.
-2. Referenciar colores desde `Styles.xaml` y la UI con `{DynamicResource}`.
-3. (Opcional) Permitir que el usuario fuerce el tema estableciendo `Application.Current.UserAppTheme`.
+La aplicación utiliza un sistema de gestión de temas robusto que permite cambio instantáneo entre modo claro y oscuro con persistencia de preferencias del usuario. La implementación se basa en aplicación directa de colores a `Application.Current.Resources` en lugar de archivos XAML estáticos.
 
-Ejemplo XAML en `Colors.xaml`:
+**Componentes Implementados**:
 
-```xaml
-<!-- Colors.xaml -->
-<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
-    <Color x:Key="PageBackgroundColor">
-        <AppThemeColor Light="#FFFFFF" Dark="#1E1E1E" />
-    </Color>
-    <Color x:Key="SidebarBackgroundColor">
-        <AppThemeColor Light="#F5F5F5" Dark="#2A2A2A" />
-    </Color>
-    <Color x:Key="CardBorderColor">
-        <AppThemeColor Light="#DDDDDD" Dark="#3A3A3A" />
-    </Color>
-</ResourceDictionary>
+1. **SettingsPage.xaml**: Página de configuración con control Switch para cambio de tema
+2. **SettingsPage.xaml.cs**: Lógica completa de gestión de temas con:
+   - `ApplyTheme()`: Aplica colores de tema directamente a recursos de aplicación
+   - `ApplyThemeColors()`: Define 40+ colores para cada tema (claro/oscuro)
+   - `SaveThemePreference()`: Persiste preferencia del usuario
+   - `LoadThemePreference()`: Carga preferencia guardada
+   - `ApplySavedTheme()`: Aplica tema guardado al inicio de la aplicación
+   - `IsCurrentlyDarkTheme()`: Detecta tema actual por análisis de colores
+
+**Características Clave**:
+
+- ✅ **Cambio instantáneo**: Los colores se actualizan inmediatamente sin reiniciar la app
+- ✅ **Persistencia**: Las preferencias se guardan y restauran entre sesiones
+- ✅ **Detección inteligente**: El switch siempre refleja el estado actual del tema
+- ✅ **40+ colores definidos**: Cobertura completa para todos los elementos UI
+- ✅ **Logging completo**: Debug detallado para troubleshooting
+- ✅ **Manejo de errores**: Fallbacks robustos y mensajes de error amigables
+
+**Colores de Tema Implementados**:
+
+```csharp
+// Tema Oscuro
+PageBackgroundColor: #121212
+SidebarBackgroundColor: #1E1E1E
+TextColor: #FFFFFF
+ButtonBackgroundColor: #3A3A3A
+// ... 40+ colores más
+
+// Tema Claro  
+PageBackgroundColor: #FFFFFF
+SidebarBackgroundColor: #F8F9FA
+TextColor: #212529
+ButtonBackgroundColor: #F8F9FA
+// ... 40+ colores más
 ```
 
-Uso en XAML (por ejemplo en `MainPage.xaml`):
+**Uso en XAML**:
 
 ```xaml
 <ContentPage BackgroundColor="{DynamicResource PageBackgroundColor}">
-    <!-- contenido -->
+    <Button BackgroundColor="{DynamicResource ButtonBackgroundColor}"
+            TextColor="{DynamicResource ButtonTextColor}" />
 </ContentPage>
 ```
 
-Alternar tema desde C# sin recargar diccionarios:
+**Navegación a Settings**:
 
 ```csharp
-private bool isDarkMode;
-
-private void OnChangeThemeClicked(object sender, EventArgs e)
+// En MainPage.xaml.cs
+private async void OnSettingsClicked(object sender, EventArgs e)
 {
-    Application.Current!.UserAppTheme = isDarkMode ? AppTheme.Light : AppTheme.Dark;
-    isDarkMode = !isDarkMode;
+    await Navigation.PushAsync(new SettingsPage());
 }
 ```
 
-> Nota: todos los colores en la UI deben usar `{DynamicResource}` para que se actualicen automáticamente al cambiar el tema y reflejen el tema del sistema.
+> **Nota Técnica**: La implementación evita las limitaciones de .NET MAUI con `ResourceDictionary.Source` aplicando colores directamente a `Application.Current.Resources`, lo que garantiza compatibilidad cross-platform y rendimiento óptimo.
 
 ### 3.2. Herramientas y modelo de datos
 
@@ -280,14 +297,55 @@ RedNachoToolbox/
 └─ Properties/
 ```
 
+### Epic 3: Gestión de Temas - ✅ COMPLETADO
+
+**Fecha de Finalización**: Septiembre 2025
+
+**Resumen de Implementación**:
+
+El Epic 3 se centró en implementar un sistema completo de gestión de temas (Light/Dark Mode) con las siguientes características:
+
+**Archivos Implementados**:
+- ✅ `SettingsPage.xaml` - Interfaz de configuración con switch de tema
+- ✅ `SettingsPage.xaml.cs` - Lógica completa de gestión de temas
+- ✅ Navegación desde `MainPage` a `SettingsPage`
+- ✅ Integración con `App.xaml.cs` para aplicación de tema al inicio
+
+**Funcionalidades Logradas**:
+- ✅ Cambio instantáneo de tema sin reinicio de aplicación
+- ✅ Persistencia de preferencias del usuario entre sesiones
+- ✅ Detección inteligente del tema actual
+- ✅ 40+ colores definidos para cobertura completa de UI
+- ✅ Logging detallado para debugging y troubleshooting
+- ✅ Manejo robusto de errores con fallbacks
+
+**Desafíos Técnicos Resueltos**:
+- ❌ **Problema**: "Source can only be set from XAML" - Limitación de .NET MAUI
+- ✅ **Solución**: Aplicación directa de colores a `Application.Current.Resources`
+- ❌ **Problema**: Switch no sincronizado al re-entrar a Settings
+- ✅ **Solución**: Detección de tema por análisis de colores aplicados
+
+**Archivos Limpiados**:
+- 🗑️ Eliminados: `DarkTheme.xaml`, `LightTheme.xaml` (ya no necesarios)
+- 🔧 Actualizado: `App.xaml` (removida referencia a archivos XAML de tema)
+
 ### Próximos Pasos
 
-* Ajustar la UI principal para el layout final: sidebar fija a 250 px y área de contenido flexible (como en `Views/MainPage.xaml`).
-* Consolidar temas en `Resources/Styles/Colors.xaml` y `Resources/Styles/Styles.xaml` usando `{DynamicResource}`.
-* Integrar `ToolCategory` y `ToolCollection` en `MainViewModel` y bindings de `MainPage`.
-* Registrar ViewModels y páginas en `MauiProgram.cs` vía DI.
-* Registrar y validar la herramienta de ejemplo `Calculator` bajo `Tools/Calculator/`.
-* Definir servicios de navegación y gestión de herramientas (`Services/`) y su registro cuando las implementaciones estén listas.
+**Epic 4: Herramientas y Funcionalidad Core**:
+* Integrar `ToolCategory` y `ToolCollection` en `MainViewModel` y bindings de `MainPage`
+* Registrar ViewModels y páginas en `MauiProgram.cs` vía DI
+* Implementar herramientas de ejemplo bajo `Tools/` (Calculator, etc.)
+* Definir servicios de navegación y gestión de herramientas (`Services/`)
+
+**Mejoras de UI/UX**:
+* Implementar animaciones suaves para transiciones de tema
+* Agregar más opciones de configuración en SettingsPage
+* Mejorar feedback visual durante cambios de tema
+
+**Optimizaciones**:
+* Implementar lazy loading para herramientas
+* Agregar tests unitarios para gestión de temas
+* Optimizar rendimiento de aplicación de colores
 
 ## Referencias
 
