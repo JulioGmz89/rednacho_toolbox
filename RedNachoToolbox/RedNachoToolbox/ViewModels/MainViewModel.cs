@@ -14,6 +14,8 @@ public class MainViewModel : BaseViewModel
     private string _searchText = string.Empty;
     private ToolCategory? _selectedCategory;
     private ToolInfo? _selectedTool;
+    private bool _isSidebarCollapsed;
+    private bool _isDarkTheme;
 
     /// <summary>
     /// Initializes a new instance of the MainViewModel class.
@@ -23,6 +25,9 @@ public class MainViewModel : BaseViewModel
         Title = "Red Nacho ToolBox";
         _tools = new ObservableCollection<ToolInfo>();
         _filteredTools = new ObservableCollection<ToolInfo>();
+        
+        // Initialize sidebar and theme state from preferences
+        LoadPreferences();
         
         // Initialize with sample data
         LoadSampleTools();
@@ -101,6 +106,124 @@ public class MainViewModel : BaseViewModel
     /// Gets a value indicating whether there are active filters applied.
     /// </summary>
     public bool HasActiveFilters => !string.IsNullOrWhiteSpace(SearchText) || SelectedCategory.HasValue;
+
+    /// <summary>
+    /// Gets or sets whether the sidebar is collapsed.
+    /// </summary>
+    public bool IsSidebarCollapsed
+    {
+        get => _isSidebarCollapsed;
+        set
+        {
+            if (SetProperty(ref _isSidebarCollapsed, value))
+            {
+                OnPropertyChanged(nameof(LogoImageSource));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether dark theme is currently active.
+    /// </summary>
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            if (SetProperty(ref _isDarkTheme, value))
+            {
+                OnPropertyChanged(nameof(LogoImageSource));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the appropriate logo image source based on sidebar state and theme.
+    /// </summary>
+    public string LogoImageSource
+    {
+        get
+        {
+            if (IsSidebarCollapsed)
+            {
+                return "rn_toolkit_collapsed.png";
+            }
+            else
+            {
+                return IsDarkTheme ? "rn_toolkit_expanded_dark.png" : "rn_toolkit_expanded_light.png";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the base name for the dashboard icon (grid_outline).
+    /// </summary>
+    public string DashboardIconBase => "grid_outline";
+
+    /// <summary>
+    /// Gets the base name for the documentation icon (document_outline).
+    /// </summary>
+    public string DocumentationIconBase => "document_outline";
+
+    /// <summary>
+    /// Gets the base name for the settings icon (options_outline).
+    /// </summary>
+    public string SettingsIconBase => "options_outline";
+
+    /// <summary>
+    /// Loads user preferences for sidebar and theme state.
+    /// </summary>
+    private void LoadPreferences()
+    {
+        // Load sidebar preference
+        _isSidebarCollapsed = Preferences.Get("IsSidebarCollapsed", false);
+        
+        // Load theme preference by checking current application resources
+        _isDarkTheme = IsCurrentlyDarkTheme();
+        
+        System.Diagnostics.Debug.WriteLine($"MainViewModel loaded preferences - Sidebar: {(_isSidebarCollapsed ? "Collapsed" : "Expanded")}, Theme: {(_isDarkTheme ? "Dark" : "Light")}");
+    }
+
+    /// <summary>
+    /// Determines if the current theme is dark by checking applied color values.
+    /// </summary>
+    private bool IsCurrentlyDarkTheme()
+    {
+        try
+        {
+            var resources = Application.Current?.Resources;
+            if (resources == null) return false;
+
+            // Check the current PageBackgroundColor to determine theme
+            if (resources.TryGetValue("PageBackgroundColor", out var bgColorObj) && bgColorObj is Color bgColor)
+            {
+                // Dark theme background is very dark, light theme background is white
+                return bgColor.Red < 0.5f && bgColor.Green < 0.5f && bgColor.Blue < 0.5f;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error detecting current theme in MainViewModel: {ex.Message}");
+        }
+        
+        return false; // Default to light theme
+    }
+
+    /// <summary>
+    /// Updates the theme state (called from external sources like SettingsPage).
+    /// </summary>
+    public void UpdateThemeState(bool isDarkTheme)
+    {
+        IsDarkTheme = isDarkTheme;
+    }
+
+    /// <summary>
+    /// Updates the sidebar state (called from external sources like SettingsPage).
+    /// </summary>
+    public void UpdateSidebarState(bool isSidebarCollapsed)
+    {
+        IsSidebarCollapsed = isSidebarCollapsed;
+    }
 
     /// <summary>
     /// Loads sample tools for demonstration purposes.

@@ -2,6 +2,7 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:RedNachoToolbox"
+             xmlns:converters="clr-namespace:RedNachoToolbox.Converters"
              x:Class="RedNachoToolbox.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -11,6 +12,13 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
                 <!-- Theme colors are now applied programmatically via SettingsPage.ApplySavedTheme() -->
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Value Converters -->
+            <converters:BoolToWidthConverter x:Key="BoolToWidthConverter" />
+            <converters:BoolToPaddingConverter x:Key="BoolToPaddingConverter" />
+            <converters:BoolToLogoHeightConverter x:Key="BoolToLogoHeightConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:ThemeIconConverter x:Key="ThemeIconConverter" />
             
             <!-- Tool Card DataTemplate -->
             <DataTemplate x:Key="ToolCardTemplate">

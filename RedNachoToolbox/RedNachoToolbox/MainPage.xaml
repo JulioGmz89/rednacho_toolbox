@@ -7,9 +7,21 @@
              x:DataType="viewmodels:MainViewModel"
              Title="Red Nacho ToolBox">
 
+    <ContentPage.Resources>
+        <!-- Interactive Button Frame Style with Hover and Active States -->
+        <Style x:Key="InteractiveButtonFrame" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="HasShadow" Value="False" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+        </Style>
+    </ContentPage.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="{Binding IsSidebarCollapsed, Converter={StaticResource BoolToWidthConverter}}" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -25,15 +37,76 @@
                 
                 <!-- Main Navigation Area -->
                 <ScrollView Grid.Row="0">
-                    <VerticalStackLayout Padding="16" Spacing="16">
-                        <!-- App Branding -->
-                        <Label Text="Red Nacho ToolBox"
-                               FontSize="18"
-                               FontAttributes="Bold"
+                    <VerticalStackLayout Padding="{Binding IsSidebarCollapsed, Converter={StaticResource BoolToPaddingConverter}}" Spacing="16">
+                        <!-- App Logo -->
+                        <Image Source="{Binding LogoImageSource}"
+                               Aspect="AspectFit"
                                HorizontalOptions="Center"
-                               Margin="0,0,0,20" />
+                               VerticalOptions="Start"
+                               HeightRequest="{Binding IsSidebarCollapsed, Converter={StaticResource BoolToLogoHeightConverter}}"
+                               Margin="0,8,0,16" />
                         
-                        <!-- Search Bar -->
+                        <!-- Collapsed Navigation Section (Visible only when collapsed) -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding IsSidebarCollapsed}" Margin="0,0,0,16">
+                            
+                            <!-- Dashboard Button - Collapsed -->
+                            <Grid HeightRequest="40" WidthRequest="40" HorizontalOptions="Center">
+                                <Frame Style="{StaticResource InteractiveButtonFrame}" 
+                                       HeightRequest="40" 
+                                       WidthRequest="40" 
+                                       CornerRadius="8">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnDashboardClicked" />
+                                        <PointerGestureRecognizer PointerEntered="OnDashboardPointerEntered" 
+                                                                PointerExited="OnDashboardPointerExited" />
+                                    </Frame.GestureRecognizers>
+                                    <Image WidthRequest="24"
+                                           HeightRequest="24"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="Center">
+                                        <Image.Source>
+                                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                                <Binding Path="DashboardIconBase" />
+                                                <Binding Path="IsDarkTheme" />
+                                            </MultiBinding>
+                                        </Image.Source>
+                                    </Image>
+                                </Frame>
+                            </Grid>
+                            
+                            <!-- Divider between Dashboard and Documentation -->
+                            <BoxView HeightRequest="1"
+                                     BackgroundColor="{DynamicResource BorderColorLight}"
+                                     Margin="8,4,8,4" />
+                            
+                            <!-- Documentation Button - Collapsed -->
+                            <Grid HeightRequest="40" WidthRequest="40" HorizontalOptions="Center">
+                                <Frame Style="{StaticResource InteractiveButtonFrame}" 
+                                       HeightRequest="40" 
+                                       WidthRequest="40" 
+                                       CornerRadius="8">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnDocumentationClicked" />
+                                        <PointerGestureRecognizer PointerEntered="OnDocumentationPointerEntered" 
+                                                                PointerExited="OnDocumentationPointerExited" />
+                                    </Frame.GestureRecognizers>
+                                    <Image WidthRequest="24"
+                                           HeightRequest="24"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="Center">
+                                        <Image.Source>
+                                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                                <Binding Path="DocumentationIconBase" />
+                                                <Binding Path="IsDarkTheme" />
+                                            </MultiBinding>
+                                        </Image.Source>
+                                    </Image>
+                                </Frame>
+                            </Grid>
+                            
+                        </VerticalStackLayout>
+                        
+                        <!-- Search Bar (Hidden when collapsed) -->
                         <SearchBar x:Name="ToolSearchBar"
                                    Placeholder="Search tools..."
                                    BackgroundColor="{DynamicResource InputBackgroundColor}"
@@ -41,35 +114,73 @@
                                    PlaceholderColor="{DynamicResource InputPlaceholderColor}"
                                    SearchButtonPressed="OnSearchButtonPressed"
                                    TextChanged="OnSearchTextChanged"
-                                   Margin="0,0,0,16" />
+                                   Margin="0,0,0,16"
+                                   IsVisible="{Binding IsSidebarCollapsed, Converter={StaticResource InvertedBoolConverter}}" />
                         
-                        <!-- Navigation Buttons -->
-                        <VerticalStackLayout Spacing="8">
-                            <!-- All Applications Button -->
-                            <Button x:Name="AllApplicationsButton"
-                                    Text="All Applications"
-                                    BackgroundColor="{DynamicResource ButtonBackgroundColor}"
-                                    TextColor="{DynamicResource ButtonTextColor}"
-                                    BorderColor="{DynamicResource ButtonBorderColor}"
-                                    BorderWidth="1"
-                                    CornerRadius="6"
-                                    FontSize="14"
-                                    HeightRequest="40"
-                                    HorizontalOptions="Fill"
-                                    Clicked="OnAllApplicationsClicked" />
+                        <!-- Navigation Section (Hidden when collapsed) -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding IsSidebarCollapsed, Converter={StaticResource InvertedBoolConverter}}">
+                            
+                            <!-- Dashboard Button -->
+                            <Frame Style="{StaticResource InteractiveButtonFrame}">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnDashboardClicked" />
+                                    <PointerGestureRecognizer PointerEntered="OnDashboardPointerEntered" 
+                                                            PointerExited="OnDashboardPointerExited" />
+                                </Frame.GestureRecognizers>
+                                <Grid ColumnDefinitions="32, *" ColumnSpacing="12" Padding="12,8">
+                                    <Image Grid.Column="0"
+                                           WidthRequest="20"
+                                           HeightRequest="20"
+                                           VerticalOptions="Center">
+                                        <Image.Source>
+                                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                                <Binding Path="DashboardIconBase" />
+                                                <Binding Path="IsDarkTheme" />
+                                            </MultiBinding>
+                                        </Image.Source>
+                                    </Image>
+                                    <Label Grid.Column="1"
+                                           Text="Dashboard"
+                                           TextColor="{DynamicResource TextColor}"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="Start"
+                                           FontSize="14" />
+                                </Grid>
+                            </Frame>
+                            
+                            <!-- Divider -->
+                            <BoxView HeightRequest="1"
+                                     BackgroundColor="{DynamicResource BorderColorLight}"
+                                     Margin="8,8,8,8" />
                             
                             <!-- Documentation Button -->
-                            <Button x:Name="DocumentationButton"
-                                    Text="Documentation"
-                                    BackgroundColor="{DynamicResource ButtonBackgroundColor}"
-                                    TextColor="{DynamicResource ButtonTextColor}"
-                                    BorderColor="{DynamicResource ButtonBorderColor}"
-                                    BorderWidth="1"
-                                    CornerRadius="6"
-                                    FontSize="14"
-                                    HeightRequest="40"
-                                    HorizontalOptions="Fill"
-                                    Clicked="OnDocumentationClicked" />
+                            <Frame Style="{StaticResource InteractiveButtonFrame}">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnDocumentationClicked" />
+                                    <PointerGestureRecognizer PointerEntered="OnDocumentationPointerEntered" 
+                                                            PointerExited="OnDocumentationPointerExited" />
+                                </Frame.GestureRecognizers>
+                                <Grid ColumnDefinitions="32, *" ColumnSpacing="12" Padding="12,8">
+                                    <Image Grid.Column="0"
+                                           WidthRequest="20"
+                                           HeightRequest="20"
+                                           VerticalOptions="Center">
+                                        <Image.Source>
+                                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                                <Binding Path="DocumentationIconBase" />
+                                                <Binding Path="IsDarkTheme" />
+                                            </MultiBinding>
+                                        </Image.Source>
+                                    </Image>
+                                    <Label Grid.Column="1"
+                                           Text="Documentation"
+                                           TextColor="{DynamicResource TextColor}"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="Start"
+                                           FontSize="14" />
+                                </Grid>
+                            </Frame>
+                            
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </ScrollView>
@@ -78,18 +189,69 @@
                 <Border Grid.Row="1"
                         BackgroundColor="{DynamicResource SettingsBackgroundColor}"
                         StrokeThickness="0"
-                        Padding="16,12">
-                    <Button x:Name="SettingsButton"
-                            Text="⚙️ Settings"
-                            BackgroundColor="{DynamicResource SettingsButtonBackgroundColor}"
-                            TextColor="{DynamicResource ButtonTextColor}"
-                            BorderColor="{DynamicResource SettingsButtonBorderColor}"
-                            BorderWidth="1"
-                            CornerRadius="6"
-                            FontSize="14"
-                            HeightRequest="40"
-                            HorizontalOptions="Fill"
-                            Clicked="OnSettingsClicked" />
+                        Padding="8,12"
+                        IsVisible="{Binding IsSidebarCollapsed, Converter={StaticResource InvertedBoolConverter}}">
+                    
+                    <!-- Settings Button -->
+                    <VerticalStackLayout Spacing="8">
+                        <Frame Style="{StaticResource InteractiveButtonFrame}">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnSettingsClicked" />
+                                <PointerGestureRecognizer PointerEntered="OnSettingsPointerEntered" 
+                                                        PointerExited="OnSettingsPointerExited" />
+                            </Frame.GestureRecognizers>
+                            <Grid ColumnDefinitions="32, *" ColumnSpacing="12" Padding="12,8">
+                                <Image Grid.Column="0"
+                                       WidthRequest="20"
+                                       HeightRequest="20"
+                                       VerticalOptions="Center">
+                                    <Image.Source>
+                                        <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                            <Binding Path="SettingsIconBase" />
+                                            <Binding Path="IsDarkTheme" />
+                                        </MultiBinding>
+                                    </Image.Source>
+                                </Image>
+                                <Label Grid.Column="1"
+                                       Text="Settings"
+                                       TextColor="{DynamicResource TextColor}"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="Start"
+                                       FontSize="14" />
+                            </Grid>
+                        </Frame>
+                    </VerticalStackLayout>
+                </Border>
+                
+                <!-- Settings Button for Collapsed Sidebar -->
+                <Border Grid.Row="1"
+                        BackgroundColor="{DynamicResource SettingsBackgroundColor}"
+                        StrokeThickness="0"
+                        Padding="8,12"
+                        IsVisible="{Binding IsSidebarCollapsed}">
+                    <Grid HeightRequest="40" WidthRequest="40" HorizontalOptions="Center">
+                        <Frame Style="{StaticResource InteractiveButtonFrame}" 
+                               HeightRequest="40" 
+                               WidthRequest="40" 
+                               CornerRadius="8">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnSettingsClicked" />
+                                <PointerGestureRecognizer PointerEntered="OnSettingsPointerEntered" 
+                                                        PointerExited="OnSettingsPointerExited" />
+                            </Frame.GestureRecognizers>
+                            <Image WidthRequest="24"
+                                   HeightRequest="24"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center">
+                                <Image.Source>
+                                    <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                        <Binding Path="SettingsIconBase" />
+                                        <Binding Path="IsDarkTheme" />
+                                    </MultiBinding>
+                                </Image.Source>
+                            </Image>
+                        </Frame>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>

@@ -38,7 +38,7 @@
                                FontAttributes="Bold"
                                TextColor="{DynamicResource TextColor}" />
                         
-                        <Label Text="Choose your preferred theme"
+                        <Label Text="Choose your preferred theme and sidebar layout"
                                FontSize="14"
                                TextColor="{DynamicResource TextColorSecondary}" />
                     </VerticalStackLayout>
@@ -62,6 +62,30 @@
                                 Grid.Column="1"
                                 IsToggled="{Binding IsDarkTheme}"
                                 Toggled="OnThemeSwitchToggled"
+                                OnColor="{DynamicResource PrimaryRed}"
+                                ThumbColor="{DynamicResource ButtonBackgroundColor}"
+                                VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Sidebar Collapse Toggle Switch -->
+                    <Grid ColumnDefinitions="*, Auto" 
+                          ColumnSpacing="16">
+                        
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Collapsed Sidebar"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource TextColor}" />
+                            
+                            <Label Text="Show a compact sidebar with just the logo"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource TextColorTertiary}" />
+                        </VerticalStackLayout>
+
+                        <Switch x:Name="SidebarCollapseSwitch"
+                                Grid.Column="1"
+                                IsToggled="{Binding IsSidebarCollapsed}"
+                                Toggled="OnSidebarCollapseSwitchToggled"
                                 OnColor="{DynamicResource PrimaryRed}"
                                 ThumbColor="{DynamicResource ButtonBackgroundColor}"
                                 VerticalOptions="Center" />

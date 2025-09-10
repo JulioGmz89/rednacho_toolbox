@@ -5,11 +5,13 @@ namespace RedNachoToolbox;
 public partial class SettingsPage : ContentPage
 {
     private bool _isDarkTheme;
+    private bool _isSidebarCollapsed;
 
     public SettingsPage()
     {
         InitializeComponent();
         InitializeThemeState();
+        InitializeSidebarState();
     }
 
     /// <summary>
@@ -23,6 +25,22 @@ public partial class SettingsPage : ContentPage
             if (_isDarkTheme != value)
             {
                 _isDarkTheme = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether sidebar is collapsed
+    /// </summary>
+    public bool IsSidebarCollapsed
+    {
+        get => _isSidebarCollapsed;
+        set
+        {
+            if (_isSidebarCollapsed != value)
+            {
+                _isSidebarCollapsed = value;
                 OnPropertyChanged();
             }
         }
@@ -50,6 +68,24 @@ public partial class SettingsPage : ContentPage
         VerifyThemeFilesExist();
         
         System.Diagnostics.Debug.WriteLine("=== InitializeThemeState END ===");
+    }
+
+    /// <summary>
+    /// Initialize the sidebar state based on saved preferences
+    /// </summary>
+    private void InitializeSidebarState()
+    {
+        System.Diagnostics.Debug.WriteLine("=== InitializeSidebarState START ===");
+        
+        // Load saved sidebar preference
+        IsSidebarCollapsed = LoadSidebarPreference();
+        System.Diagnostics.Debug.WriteLine($"Current sidebar state: {(IsSidebarCollapsed ? "Collapsed" : "Expanded")}");
+        
+        System.Diagnostics.Debug.WriteLine($"Setting sidebar switch to: {IsSidebarCollapsed}");
+        SidebarCollapseSwitch.IsToggled = IsSidebarCollapsed;
+        System.Diagnostics.Debug.WriteLine($"Sidebar switch IsToggled set to: {SidebarCollapseSwitch.IsToggled}");
+        
+        System.Diagnostics.Debug.WriteLine("=== InitializeSidebarState END ===");
     }
 
     /// <summary>
@@ -150,6 +186,26 @@ public partial class SettingsPage : ContentPage
         System.Diagnostics.Debug.WriteLine("Theme preference saved");
         
         System.Diagnostics.Debug.WriteLine("=== OnThemeSwitchToggled END ===");
+    }
+
+    /// <summary>
+    /// Handles sidebar collapse switch toggle events
+    /// </summary>
+    private void OnSidebarCollapseSwitchToggled(object sender, ToggledEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine("=== OnSidebarCollapseSwitchToggled START ===");
+        var isCollapsed = e.Value;
+        System.Diagnostics.Debug.WriteLine($"Sidebar switch toggled to: {(isCollapsed ? "Collapsed" : "Expanded")}");
+        
+        IsSidebarCollapsed = isCollapsed;
+        System.Diagnostics.Debug.WriteLine($"IsSidebarCollapsed property set to: {IsSidebarCollapsed}");
+        
+        // Save sidebar preference
+        System.Diagnostics.Debug.WriteLine("Saving sidebar preference...");
+        SaveSidebarPreference(isCollapsed);
+        System.Diagnostics.Debug.WriteLine("Sidebar preference saved");
+        
+        System.Diagnostics.Debug.WriteLine("=== OnSidebarCollapseSwitchToggled END ===");
     }
 
     /// <summary>
@@ -506,6 +562,40 @@ public partial class SettingsPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"Error loading theme preference: {ex.Message}");
             return false; // Default to light theme on error
+        }
+    }
+
+    /// <summary>
+    /// Saves the user's sidebar preference to application preferences
+    /// </summary>
+    private void SaveSidebarPreference(bool isSidebarCollapsed)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"=== SaveSidebarPreference: {(isSidebarCollapsed ? "Collapsed" : "Expanded")} ===");
+            Preferences.Set("IsSidebarCollapsed", isSidebarCollapsed);
+            System.Diagnostics.Debug.WriteLine($"✓ Sidebar preference saved successfully: {(isSidebarCollapsed ? "Collapsed" : "Expanded")}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ERROR saving sidebar preference: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    /// <summary>
+    /// Loads the user's saved sidebar preference
+    /// </summary>
+    public static bool LoadSidebarPreference()
+    {
+        try
+        {
+            return Preferences.Get("IsSidebarCollapsed", false); // Default to expanded sidebar
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading sidebar preference: {ex.Message}");
+            return false; // Default to expanded sidebar on error
         }
     }
 

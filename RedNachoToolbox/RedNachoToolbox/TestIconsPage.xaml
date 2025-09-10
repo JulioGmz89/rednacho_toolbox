@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RedNachoToolbox.TestIconsPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:RedNachoToolbox.Converters"
+             Title="Test Icons Page">
+    
+    <ContentPage.Resources>
+        <converters:ThemeIconConverter x:Key="ThemeIconConverter" />
+    </ContentPage.Resources>
+    
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20">
+            
+            <Label Text="SVG Icon Test Page" 
+                   FontSize="24" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" />
+            
+            <!-- Test Light Theme Icons -->
+            <Label Text="Light Theme Icons:" FontSize="18" FontAttributes="Bold" />
+            
+            <StackLayout Orientation="Horizontal" Spacing="20">
+                <StackLayout>
+                    <Image Source="grid_outline" 
+                           WidthRequest="32" 
+                           HeightRequest="32" />
+                    <Label Text="grid_outline" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image Source="document_outline" 
+                           WidthRequest="32" 
+                           HeightRequest="32" />
+                    <Label Text="document_outline" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image Source="options_outline" 
+                           WidthRequest="32" 
+                           HeightRequest="32" />
+                    <Label Text="options_outline" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+            </StackLayout>
+            
+            <!-- Test Dark Theme Icons -->
+            <Label Text="Dark Theme Icons:" FontSize="18" FontAttributes="Bold" />
+            
+            <StackLayout Orientation="Horizontal" Spacing="20">
+                <StackLayout>
+                    <Image Source="grid_outline_white" 
+                           WidthRequest="32" 
+                           HeightRequest="32" />
+                    <Label Text="grid_outline_white" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image Source="document_outline_white" 
+                           WidthRequest="32" 
+                           HeightRequest="32" />
+                    <Label Text="document_outline_white" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image Source="options_outline_white" 
+                           WidthRequest="32" 
+                           HeightRequest="32" />
+                    <Label Text="options_outline_white" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+            </StackLayout>
+            
+            <!-- Test ThemeIconConverter -->
+            <Label Text="ThemeIconConverter Test (Light Theme):" FontSize="18" FontAttributes="Bold" />
+            
+            <StackLayout Orientation="Horizontal" Spacing="20">
+                <StackLayout>
+                    <Image WidthRequest="32" HeightRequest="32">
+                        <Image.Source>
+                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                <Binding Source="grid_outline" />
+                                <Binding Source="False" />
+                            </MultiBinding>
+                        </Image.Source>
+                    </Image>
+                    <Label Text="grid (light)" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image WidthRequest="32" HeightRequest="32">
+                        <Image.Source>
+                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                <Binding Source="document_outline" />
+                                <Binding Source="False" />
+                            </MultiBinding>
+                        </Image.Source>
+                    </Image>
+                    <Label Text="document (light)" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image WidthRequest="32" HeightRequest="32">
+                        <Image.Source>
+                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                <Binding Source="options_outline" />
+                                <Binding Source="False" />
+                            </MultiBinding>
+                        </Image.Source>
+                    </Image>
+                    <Label Text="options (light)" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+            </StackLayout>
+            
+            <!-- Test ThemeIconConverter Dark -->
+            <Label Text="ThemeIconConverter Test (Dark Theme):" FontSize="18" FontAttributes="Bold" />
+            
+            <StackLayout Orientation="Horizontal" Spacing="20">
+                <StackLayout>
+                    <Image WidthRequest="32" HeightRequest="32">
+                        <Image.Source>
+                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                <Binding Source="grid_outline" />
+                                <Binding Source="True" />
+                            </MultiBinding>
+                        </Image.Source>
+                    </Image>
+                    <Label Text="grid (dark)" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image WidthRequest="32" HeightRequest="32">
+                        <Image.Source>
+                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                <Binding Source="document_outline" />
+                                <Binding Source="True" />
+                            </MultiBinding>
+                        </Image.Source>
+                    </Image>
+                    <Label Text="document (dark)" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+                
+                <StackLayout>
+                    <Image WidthRequest="32" HeightRequest="32">
+                        <Image.Source>
+                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                <Binding Source="options_outline" />
+                                <Binding Source="True" />
+                            </MultiBinding>
+                        </Image.Source>
+                    </Image>
+                    <Label Text="options (dark)" FontSize="12" HorizontalOptions="Center" />
+                </StackLayout>
+            </StackLayout>
+            
+            <!-- Test fallback icon -->
+            <Label Text="Fallback Icon Test:" FontSize="18" FontAttributes="Bold" />
+            <StackLayout>
+                <Image Source="dotnet_bot" 
+                       WidthRequest="64" 
+                       HeightRequest="64" 
+                       HorizontalOptions="Center" />
+                <Label Text="dotnet_bot (fallback)" FontSize="12" HorizontalOptions="Center" />
+            </StackLayout>
+            
+        </StackLayout>
+    </ScrollView>
+</ContentPage>
