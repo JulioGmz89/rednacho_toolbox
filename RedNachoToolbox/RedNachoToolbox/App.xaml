@@ -11,6 +11,118 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
                 <!-- Theme colors are now applied programmatically via SettingsPage.ApplySavedTheme() -->
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Tool Card DataTemplate -->
+            <DataTemplate x:Key="ToolCardTemplate">
+                <Border BackgroundColor="{DynamicResource CardBackgroundColor}"
+                        Stroke="{DynamicResource BorderColorLight}"
+                        StrokeThickness="1"
+                        Padding="16"
+                        Margin="8"
+                        HeightRequest="120">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    
+                    <!-- Shadow effect for card elevation -->
+                    <Border.Shadow>
+                        <Shadow Brush="{DynamicResource BorderColorMedium}"
+                                Offset="0,2"
+                                Radius="4"
+                                Opacity="0.3"/>
+                    </Border.Shadow>
+                    
+                    <!-- Main content grid with icon and text areas -->
+                    <Grid ColumnDefinitions="0.28*, 0.72*" 
+                          ColumnSpacing="16">
+                        
+                        <!-- Icon area (28% width) -->
+                        <Border Grid.Column="0"
+                                BackgroundColor="{DynamicResource HighlightColor}"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center"
+                                WidthRequest="64"
+                                HeightRequest="64">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+                            
+                            <Image Source="{Binding IconPath}"
+                                   Aspect="AspectFit"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"
+                                   WidthRequest="48"
+                                   HeightRequest="48">
+                                <!-- Fallback for missing icons -->
+                                <Image.Triggers>
+                                    <DataTrigger TargetType="Image" 
+                                                 Binding="{Binding IconPath}" 
+                                                 Value="">
+                                        <Setter Property="Source" Value="dotnet_bot.png"/>
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Image" 
+                                                 Binding="{Binding IconPath}" 
+                                                 Value="{x:Null}">
+                                        <Setter Property="Source" Value="dotnet_bot.png"/>
+                                    </DataTrigger>
+                                </Image.Triggers>
+                            </Image>
+                        </Border>
+                        
+                        <!-- Text content area (72% width) -->
+                        <VerticalStackLayout Grid.Column="1" 
+                                             VerticalOptions="Center"
+                                             Spacing="8">
+                            
+                            <!-- Tool name -->
+                            <Label Text="{Binding Name}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{DynamicResource TextColor}"
+                                   LineBreakMode="TailTruncation"
+                                   MaxLines="1"
+                                   VerticalOptions="Start"/>
+                            
+                            <!-- Tool description -->
+                            <Label Text="{Binding Description}"
+                                   FontSize="14"
+                                   TextColor="{DynamicResource TextColorSecondary}"
+                                   LineBreakMode="WordWrap"
+                                   MaxLines="2"
+                                   VerticalOptions="Start"/>
+                            
+                            <!-- Category indicator -->
+                            <Label Text="{Binding Category, StringFormat='Category: {0}'}"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource TextColorTertiary}"
+                                   FontAttributes="Italic"
+                                   LineBreakMode="TailTruncation"
+                                   MaxLines="1"
+                                   VerticalOptions="End"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                    
+                    <!-- Visual states for interaction feedback -->
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup Name="CommonStates">
+                            <VisualState Name="Normal"/>
+                            <VisualState Name="PointerOver">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource SelectionBackgroundColor}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource SelectionColor}"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource SelectionBackgroundColor}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource SelectionColor}"/>
+                                    <Setter Property="Opacity" Value="0.8"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                </Border>
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:RedNachoToolbox.Views"
+             xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
              x:Class="RedNachoToolbox.MainPage"
+             x:DataType="viewmodels:MainViewModel"
              Title="Red Nacho ToolBox">
 
     <Grid>
@@ -95,39 +98,8 @@
         <Border Grid.Column="1"
                 BackgroundColor="{DynamicResource PageBackgroundColor}"
                 StrokeThickness="0">
-            <ScrollView>
-                <VerticalStackLayout Padding="24" Spacing="16">
-                    <!-- Welcome Content -->
-                    <Label Text="Welcome to Red Nacho ToolBox"
-                           FontSize="24"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           Margin="0,20,0,10" />
-                    
-                    <Label Text="Select a tool from the sidebar to get started"
-                           FontSize="16"
-                           HorizontalOptions="Center"
-                           TextColor="{DynamicResource TextColorSecondary}"
-                           Margin="0,0,0,20" />
-                    
-                    <!-- Content Placeholder -->
-                    <Frame BackgroundColor="{DynamicResource CardBackgroundColor}"
-                           BorderColor="{DynamicResource BorderColorLight}"
-                           CornerRadius="8"
-                           Padding="20"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="12">
-                            <Label Text="Main Content Area"
-                                   FontSize="18"
-                                   FontAttributes="Bold" />
-                            
-                            <Label Text="This area will display the selected tool or content. The layout uses a flexible Grid system where the sidebar maintains a fixed width of 250 pixels, and this content area automatically adjusts to fill the remaining space."
-                                   FontSize="14"
-                                   LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
-                    </Frame>
-                </VerticalStackLayout>
-            </ScrollView>
+            <!-- All Tools View -->
+            <views:AllToolsView BindingContext="{Binding}" />
         </Border>
     </Grid>
 

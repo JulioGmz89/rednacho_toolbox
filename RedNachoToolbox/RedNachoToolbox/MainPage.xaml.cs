@@ -1,10 +1,21 @@
+using RedNachoToolbox.ViewModels;
+
 namespace RedNachoToolbox;
 
 public partial class MainPage : ContentPage
 {
+    /// <summary>
+    /// Gets the MainViewModel instance bound to this page
+    /// </summary>
+    public MainViewModel ViewModel { get; private set; }
+
     public MainPage()
     {
         InitializeComponent();
+        
+        // Initialize and set the ViewModel
+        ViewModel = new MainViewModel();
+        BindingContext = ViewModel;
     }
 
     #region Search Event Handlers
@@ -16,18 +27,22 @@ public partial class MainPage : ContentPage
             var searchText = searchBar.Text?.Trim();
             if (!string.IsNullOrEmpty(searchText))
             {
-                // TODO: Implement search functionality
-                // This will be connected to the ViewModel in future iterations
-                DisplayAlert("Search", $"Searching for: {searchText}", "OK");
+                // Update the ViewModel's search text
+                ViewModel.SearchText = searchText;
+                System.Diagnostics.Debug.WriteLine($"Search executed for: {searchText}");
+                
+                // Unfocus the search bar
+                searchBar.Unfocus();
             }
         }
     }
 
     private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
     {
-        var searchText = e.NewTextValue?.Trim();
-        // TODO: Implement real-time search filtering
-        // This will be connected to the ViewModel in future iterations
+        var searchText = e.NewTextValue?.Trim() ?? string.Empty;
+        
+        // Update the ViewModel's search text for real-time filtering
+        ViewModel.SearchText = searchText;
         System.Diagnostics.Debug.WriteLine($"Search text changed: {searchText}");
     }
 
@@ -37,9 +52,9 @@ public partial class MainPage : ContentPage
 
     private void OnAllApplicationsClicked(object sender, EventArgs e)
     {
-        // TODO: Navigate to All Applications view
-        // This will be connected to the ViewModel and navigation service in future iterations
-        DisplayAlert("Navigation", "All Applications selected", "OK");
+        // Clear any active filters to show all applications
+        ViewModel.ClearFilters();
+        System.Diagnostics.Debug.WriteLine("All Applications view activated - filters cleared");
         
         // Visual feedback - highlight the selected button
         ResetButtonStyles();

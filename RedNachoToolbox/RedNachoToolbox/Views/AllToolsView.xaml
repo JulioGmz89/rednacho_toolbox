@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
+             x:Class="RedNachoToolbox.Views.AllToolsView"
+             x:DataType="viewmodels:MainViewModel">
+    
+    <Grid RowDefinitions="Auto, Auto, *" 
+          RowSpacing="16"
+          Padding="20">
+        
+        <!-- Header Section -->
+        <VerticalStackLayout Grid.Row="0" Spacing="8">
+            <Label Text="All Applications"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   TextColor="{DynamicResource TextColor}"
+                   HorizontalOptions="Start"/>
+            
+            <Label Text="{Binding FilteredToolsCount, StringFormat='Showing {0} tools'}"
+                   FontSize="14"
+                   TextColor="{DynamicResource TextColorSecondary}"
+                   HorizontalOptions="Start"/>
+        </VerticalStackLayout>
+        
+        <!-- Search and Filter Section -->
+        <Grid Grid.Row="1" 
+              ColumnDefinitions="*, Auto"
+              ColumnSpacing="12">
+            
+            <!-- Search Bar -->
+            <SearchBar Grid.Column="0"
+                       Text="{Binding SearchText}"
+                       Placeholder="Search tools..."
+                       BackgroundColor="{DynamicResource InputBackgroundColor}"
+                       TextColor="{DynamicResource InputTextColor}"
+                       PlaceholderColor="{DynamicResource InputPlaceholderColor}"
+                       CancelButtonColor="{DynamicResource PrimaryRed}"
+                       VerticalOptions="Center"
+                       SearchButtonPressed="OnSearchButtonPressed"
+                       TextChanged="OnSearchTextChanged" />
+            
+            <!-- Clear Filters Button -->
+            <Button Grid.Column="1"
+                    Text="Clear"
+                    Clicked="OnClearFiltersClicked"
+                    BackgroundColor="{DynamicResource ButtonBackgroundColor}"
+                    TextColor="{DynamicResource ButtonTextColor}"
+                    BorderColor="{DynamicResource ButtonBorderColor}"
+                    BorderWidth="1"
+                    CornerRadius="8"
+                    Padding="16,8"
+                    VerticalOptions="Center"
+                    IsVisible="{Binding HasActiveFilters}"/>
+        </Grid>
+        
+        <!-- Tools Collection View -->
+        <ScrollView Grid.Row="2">
+            <CollectionView ItemsSource="{Binding FilteredTools}"
+                            ItemTemplate="{StaticResource ToolCardTemplate}"
+                            BackgroundColor="Transparent"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedTool}"
+                            SelectionChanged="OnToolSelectionChanged">
+                
+                <!-- Grid Layout for responsive design -->
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical"
+                                     Span="{OnPlatform Default=2, WinUI=3}"
+                                     HorizontalItemSpacing="12"
+                                     VerticalItemSpacing="12"/>
+                </CollectionView.ItemsLayout>
+                
+                <!-- Empty View when no tools match filters -->
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="40"
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="Center">
+                        <Label Text="🔍"
+                               FontSize="48"
+                               HorizontalOptions="Center"
+                               Margin="0,0,0,16"/>
+                        <Label Text="No tools found"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource TextColor}"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Try adjusting your search or clearing filters"
+                               FontSize="14"
+                               TextColor="{DynamicResource TextColorSecondary}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"/>
+                    </StackLayout>
+                </CollectionView.EmptyView>
+                
+                <!-- Loading indicator -->
+                <CollectionView.Header>
+                    <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{DynamicResource PrimaryRed}"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="Center"
+                                       Margin="0,20"/>
+                </CollectionView.Header>
+            </CollectionView>
+        </ScrollView>
+        
+        <!-- Floating Action Button for adding new tools (future feature) -->
+        <Button Grid.Row="2"
+                Text="+"
+                FontSize="24"
+                FontAttributes="Bold"
+                BackgroundColor="{DynamicResource PrimaryRed}"
+                TextColor="White"
+                CornerRadius="28"
+                WidthRequest="56"
+                HeightRequest="56"
+                VerticalOptions="End"
+                HorizontalOptions="End"
+                Margin="0,0,20,20"
+                Clicked="OnAddToolClicked"
+                IsVisible="False">
+            <!-- Hidden for now, will be enabled in future iterations -->
+        </Button>
+    </Grid>
+</ContentView>
