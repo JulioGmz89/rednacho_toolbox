@@ -16,6 +16,7 @@ public class MainViewModel : BaseViewModel
     private ToolInfo? _selectedTool;
     private bool _isSidebarCollapsed;
     private bool _isDarkTheme;
+    private string _activePage = "Dashboard"; // Default to Dashboard as active
 
     /// <summary>
     /// Initializes a new instance of the MainViewModel class.
@@ -169,6 +170,47 @@ public class MainViewModel : BaseViewModel
     /// Gets the base name for the settings icon (options_outline).
     /// </summary>
     public string SettingsIconBase => "options_outline";
+
+    /// <summary>
+    /// Gets or sets the currently active page.
+    /// </summary>
+    public string ActivePage
+    {
+        get => _activePage;
+        set => SetProperty(ref _activePage, value);
+    }
+
+    /// <summary>
+    /// Gets whether the Dashboard page is currently active.
+    /// </summary>
+    public bool IsDashboardActive => ActivePage == "Dashboard";
+
+    /// <summary>
+    /// Gets whether the Documentation page is currently active.
+    /// </summary>
+    public bool IsDocumentationActive => ActivePage == "Documentation";
+
+    /// <summary>
+    /// Gets whether the Settings page is currently active.
+    /// Note: Settings is excluded from active page indicator system since it navigates to a separate view.
+    /// </summary>
+    public bool IsSettingsActive => false; // Settings doesn't show active indicator
+
+    /// <summary>
+    /// Sets the active page and notifies all active state properties.
+    /// </summary>
+    /// <param name="pageName">The name of the page to set as active</param>
+    public void SetActivePage(string pageName)
+    {
+        ActivePage = pageName;
+        
+        // Notify all active state properties
+        OnPropertyChanged(nameof(IsDashboardActive));
+        OnPropertyChanged(nameof(IsDocumentationActive));
+        OnPropertyChanged(nameof(IsSettingsActive));
+        
+        System.Diagnostics.Debug.WriteLine($"Active page changed to: {pageName}");
+    }
 
     /// <summary>
     /// Loads user preferences for sidebar and theme state.

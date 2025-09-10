@@ -1,4 +1,5 @@
 using RedNachoToolbox.ViewModels;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace RedNachoToolbox;
 
@@ -25,6 +26,11 @@ public partial class MainPage : ContentPage
     {
         // Refresh ViewModel state when page appears (e.g., returning from Settings)
         RefreshViewModelState();
+        
+        // Update active button backgrounds to fix initial color bug and theme change bug
+        UpdateActiveButtonBackgrounds();
+        
+        System.Diagnostics.Debug.WriteLine("Page appearing - ViewModel refreshed and active button backgrounds updated");
     }
 
     /// <summary>
@@ -100,12 +106,19 @@ public partial class MainPage : ContentPage
 
     #region Hover Event Handlers
 
-    // Dashboard Hover Events
+    // Dashboard Hover Events - No hover effect when already active
     private void OnDashboardPointerEntered(object sender, PointerEventArgs e)
     {
         if (sender is Frame frame)
         {
-            // Theme-aware hover color
+            // Don't show hover effect if button is already active (same color)
+            if (ViewModel.IsDashboardActive)
+            {
+                System.Diagnostics.Debug.WriteLine("Dashboard hover entered - Button is active, no hover effect needed");
+                return;
+            }
+            
+            // Theme-aware hover color (same as active color)
             var hoverColor = ViewModel.IsDarkTheme 
                 ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
                 : Color.FromArgb("#F5F5F5"); // Light gray for light theme
@@ -119,17 +132,31 @@ public partial class MainPage : ContentPage
     {
         if (sender is Frame frame)
         {
+            // Don't change color if button is active (should stay active color)
+            if (ViewModel.IsDashboardActive)
+            {
+                System.Diagnostics.Debug.WriteLine("Dashboard hover exited - Button is active, maintaining active color");
+                return;
+            }
+            
             frame.BackgroundColor = Colors.Transparent;
             System.Diagnostics.Debug.WriteLine("Dashboard hover exited - Returned to transparent");
         }
     }
 
-    // Documentation Hover Events
+    // Documentation Hover Events - No hover effect when already active
     private void OnDocumentationPointerEntered(object sender, PointerEventArgs e)
     {
         if (sender is Frame frame)
         {
-            // Theme-aware hover color
+            // Don't show hover effect if button is already active (same color)
+            if (ViewModel.IsDocumentationActive)
+            {
+                System.Diagnostics.Debug.WriteLine("Documentation hover entered - Button is active, no hover effect needed");
+                return;
+            }
+            
+            // Theme-aware hover color (same as active color)
             var hoverColor = ViewModel.IsDarkTheme 
                 ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
                 : Color.FromArgb("#F5F5F5"); // Light gray for light theme
@@ -143,20 +170,27 @@ public partial class MainPage : ContentPage
     {
         if (sender is Frame frame)
         {
+            // Don't change color if button is active (should stay active color)
+            if (ViewModel.IsDocumentationActive)
+            {
+                System.Diagnostics.Debug.WriteLine("Documentation hover exited - Button is active, maintaining active color");
+                return;
+            }
+            
             frame.BackgroundColor = Colors.Transparent;
             System.Diagnostics.Debug.WriteLine("Documentation hover exited - Returned to transparent");
         }
     }
 
-    // Settings Hover Events
+    // Settings Hover Events - Using more contrasting colors for better visibility
     private void OnSettingsPointerEntered(object sender, PointerEventArgs e)
     {
         if (sender is Frame frame)
         {
-            // Theme-aware hover color
+            // More contrasting hover color for Settings (since it has different background)
             var hoverColor = ViewModel.IsDarkTheme 
-                ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
-                : Color.FromArgb("#F5F5F5"); // Light gray for light theme
+                ? Color.FromArgb("#404040") // Lighter gray for dark theme (more contrast)
+                : Color.FromArgb("#E0E0E0"); // Darker gray for light theme (more contrast)
             
             frame.BackgroundColor = hoverColor;
             System.Diagnostics.Debug.WriteLine($"Settings hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
@@ -216,9 +250,27 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("OnDashboardClicked - Sender is not a Frame!");
             }
             
+            // Animate previous active indicators to deactivate (if any)
+            if (ViewModel.IsDocumentationActive)
+            {
+                _ = AnimateIndicatorTransition(DocumentationIndicatorCapsule, false);
+                _ = AnimateCollapsedDotTransition(DocumentationIndicatorDotCollapsed, false);
+            }
+            
+            // Set Dashboard as active page
+            ViewModel.SetActivePage("Dashboard");
+            
+            // Animate new active indicators (both expanded capsule and collapsed dot)
+            var capsuleTask = AnimateIndicatorTransition(DashboardIndicatorCapsule, true);
+            var dotTask = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, true);
+            await Task.WhenAll(capsuleTask, dotTask);
+            
+            // Update active button backgrounds
+            UpdateActiveButtonBackgrounds();
+            
             // Clear any active filters to show all applications (Dashboard view)
             ViewModel.ClearFilters();
-            System.Diagnostics.Debug.WriteLine("Dashboard view activated - filters cleared");
+            System.Diagnostics.Debug.WriteLine("Dashboard view activated - filters cleared, set as active page");
             
             // TODO: Navigate to Dashboard/All Applications view
             await DisplayAlert("Dashboard", "Dashboard functionality will be implemented here.", "OK");
@@ -236,26 +288,33 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Event handler called");
             
-            // Enhanced visual feedback for Frame-based button with more visible colors
+            // Enhanced visual feedback for Frame-based button with theme-aware colors
             if (sender is Frame frame)
             {
                 System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Frame found, applying visual states");
                 
-                // Pressed state - very visible green for testing
-                frame.BackgroundColor = Colors.Green;
-                frame.Opacity = 0.8;
-                System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Applied pressed state (Green)");
-                await Task.Delay(200); // Longer delay for visibility
+                // Pressed state - theme-aware pressed color
+                var pressedColor = ViewModel.IsDarkTheme 
+                    ? Color.FromArgb("#404040") // Darker gray for dark theme
+                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
                 
-                // Hover state - very visible orange for testing
-                frame.BackgroundColor = Colors.Orange;
+                frame.BackgroundColor = pressedColor;
                 frame.Opacity = 0.9;
-                System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Applied hover state (Orange)");
-                await Task.Delay(200); // Longer delay for visibility
+                System.Diagnostics.Debug.WriteLine($"OnDocumentationClicked - Applied pressed state ({pressedColor})");
+                await Task.Delay(150); // Quick pressed feedback
+                
+                // Return to hover state briefly
+                var hoverColor = ViewModel.IsDarkTheme 
+                    ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
+                    : Color.FromArgb("#F5F5F5"); // Light gray for light theme
+                
+                frame.BackgroundColor = hoverColor;
+                frame.Opacity = 1.0;
+                System.Diagnostics.Debug.WriteLine($"OnDocumentationClicked - Returned to hover state ({hoverColor})");
+                await Task.Delay(100); // Brief hover feedback
                 
                 // Return to normal
                 frame.BackgroundColor = Colors.Transparent;
-                frame.Opacity = 1.0;
                 System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Returned to normal state");
             }
             else
@@ -263,11 +322,29 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Sender is not a Frame!");
             }
             
+            // Animate previous active indicators to deactivate (if any)
+            if (ViewModel.IsDashboardActive)
+            {
+                _ = AnimateIndicatorTransition(DashboardIndicatorCapsule, false);
+                _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, false);
+            }
+            
+            // Set Documentation as active page
+            ViewModel.SetActivePage("Documentation");
+            
+            // Animate new active indicators (both expanded capsule and collapsed dot)
+            var capsuleTask = AnimateIndicatorTransition(DocumentationIndicatorCapsule, true);
+            var dotTask = AnimateCollapsedDotTransition(DocumentationIndicatorDotCollapsed, true);
+            await Task.WhenAll(capsuleTask, dotTask);
+            
+            // Update active button backgrounds
+            UpdateActiveButtonBackgrounds();
+            
             // TODO: Navigate to Documentation view
             // This will be connected to the ViewModel and navigation service in future iterations
             await DisplayAlert("Documentation", "Documentation functionality will be implemented here.", "OK");
             
-            System.Diagnostics.Debug.WriteLine("Documentation view selected");
+            System.Diagnostics.Debug.WriteLine("Documentation view selected - set as active page");
         }
         catch (Exception ex)
         {
@@ -282,26 +359,33 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Event handler called");
             
-            // Enhanced visual feedback for Frame-based button with more visible colors
+            // Enhanced visual feedback for Frame-based button with theme-aware colors
             if (sender is Frame frame)
             {
                 System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Frame found, applying visual states");
                 
-                // Pressed state - very visible purple for testing
-                frame.BackgroundColor = Colors.Purple;
-                frame.Opacity = 0.8;
-                System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Applied pressed state (Purple)");
-                await Task.Delay(200); // Longer delay for visibility
+                // Pressed state - theme-aware pressed color
+                var pressedColor = ViewModel.IsDarkTheme 
+                    ? Color.FromArgb("#404040") // Darker gray for dark theme
+                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
                 
-                // Hover state - very visible yellow for testing
-                frame.BackgroundColor = Colors.Yellow;
+                frame.BackgroundColor = pressedColor;
                 frame.Opacity = 0.9;
-                System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Applied hover state (Yellow)");
-                await Task.Delay(200); // Longer delay for visibility
+                System.Diagnostics.Debug.WriteLine($"OnSettingsClicked - Applied pressed state ({pressedColor})");
+                await Task.Delay(150); // Quick pressed feedback
+                
+                // Return to hover state briefly
+                var hoverColor = ViewModel.IsDarkTheme 
+                    ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
+                    : Color.FromArgb("#F5F5F5"); // Light gray for light theme
+                
+                frame.BackgroundColor = hoverColor;
+                frame.Opacity = 1.0;
+                System.Diagnostics.Debug.WriteLine($"OnSettingsClicked - Returned to hover state ({hoverColor})");
+                await Task.Delay(100); // Brief hover feedback
                 
                 // Return to normal
                 frame.BackgroundColor = Colors.Transparent;
-                frame.Opacity = 1.0;
                 System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Returned to normal state");
             }
             else
@@ -309,11 +393,14 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Sender is not a Frame!");
             }
             
+            // Note: Settings doesn't change active page state since it navigates to separate view
+            // The previous active page (Dashboard/Documentation) should remain active when returning
+            
             // Navigate to SettingsPage
             var settingsPage = new SettingsPage();
             await Navigation.PushAsync(settingsPage);
             
-            System.Diagnostics.Debug.WriteLine("Navigated to Settings page");
+            System.Diagnostics.Debug.WriteLine("Navigated to Settings page - set as active page");
         }
         catch (Exception ex)
         {
@@ -327,12 +414,225 @@ public partial class MainPage : ContentPage
 
     #region Helper Methods
 
+    /// <summary>
+    /// Updates the active background colors for all buttons based on current active page
+    /// Active background color matches hover color for consistency
+    /// </summary>
+    private void UpdateActiveButtonBackgrounds()
+    {
+        try
+        {
+            // Active background color matches hover color (same as hover state)
+            var activeColor = ViewModel.IsDarkTheme 
+                ? Color.FromArgb("#2A2A2A") // Same as hover - Dark gray for dark theme
+                : Color.FromArgb("#F5F5F5"); // Same as hover - Light gray for light theme
+            
+            var transparentColor = Colors.Transparent;
+            
+            // Update expanded buttons
+            if (DashboardButtonFrame != null)
+            {
+                DashboardButtonFrame.BackgroundColor = ViewModel.IsDashboardActive ? activeColor : transparentColor;
+            }
+            
+            if (DocumentationButtonFrame != null)
+            {
+                DocumentationButtonFrame.BackgroundColor = ViewModel.IsDocumentationActive ? activeColor : transparentColor;
+            }
+            
+            // Update collapsed buttons
+            if (DashboardButtonFrameCollapsed != null)
+            {
+                DashboardButtonFrameCollapsed.BackgroundColor = ViewModel.IsDashboardActive ? activeColor : transparentColor;
+            }
+            
+            if (DocumentationButtonFrameCollapsed != null)
+            {
+                DocumentationButtonFrameCollapsed.BackgroundColor = ViewModel.IsDocumentationActive ? activeColor : transparentColor;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"Updated active button backgrounds (matching hover colors) - Active page: {ViewModel.ActivePage}, Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating active button backgrounds: {ex.Message}");
+        }
+    }
+
     private void ResetButtonStyles()
     {
         // Note: With Frame-based buttons using TapGestureRecognizer, 
         // visual feedback is now handled individually in each event handler
         // This method is kept for compatibility but no longer needed
         System.Diagnostics.Debug.WriteLine("ResetButtonStyles called - using Frame-based buttons now");
+    }
+
+    /// <summary>
+    /// Animates the collapsed dot indicator transition from small dot to full size
+    /// </summary>
+    /// <param name="targetDot">The Ellipse element to animate</param>
+    /// <param name="isActivating">True if activating (small to full), false if deactivating</param>
+    private async Task AnimateCollapsedDotTransition(Ellipse? targetDot, bool isActivating)
+    {
+        if (targetDot == null) return;
+
+        try
+        {
+            const uint animationDuration = 250; // milliseconds - slightly faster than capsule
+            const double smallDotSize = 2.0; // Very small starting size
+            const double fullDotSize = 8.0; // Current full size
+
+            if (isActivating)
+            {
+                // Animation from small dot to full size
+                targetDot.WidthRequest = smallDotSize;
+                targetDot.HeightRequest = smallDotSize;
+                targetDot.IsVisible = true;
+
+                // Create custom animation for width
+                var widthAnimation = new Animation(
+                    v => targetDot.WidthRequest = v,
+                    smallDotSize,
+                    fullDotSize,
+                    Easing.CubicOut
+                );
+
+                // Create custom animation for height
+                var heightAnimation = new Animation(
+                    v => targetDot.HeightRequest = v,
+                    smallDotSize,
+                    fullDotSize,
+                    Easing.CubicOut
+                );
+
+                // Combine animations
+                var parentAnimation = new Animation();
+                parentAnimation.Add(0, 1, widthAnimation);
+                parentAnimation.Add(0, 1, heightAnimation);
+
+                // Start animation
+                parentAnimation.Commit(targetDot, "DotActivation", length: animationDuration);
+                await Task.Delay((int)animationDuration);
+            }
+            else
+            {
+                // Animation from full size to small dot, then hide
+                var widthAnimation = new Animation(
+                    v => targetDot.WidthRequest = v,
+                    fullDotSize,
+                    smallDotSize,
+                    Easing.CubicIn
+                );
+
+                var heightAnimation = new Animation(
+                    v => targetDot.HeightRequest = v,
+                    fullDotSize,
+                    smallDotSize,
+                    Easing.CubicIn
+                );
+
+                // Combine animations
+                var parentAnimation = new Animation();
+                parentAnimation.Add(0, 1, widthAnimation);
+                parentAnimation.Add(0, 1, heightAnimation);
+
+                // Start animation
+                parentAnimation.Commit(targetDot, "DotDeactivation", length: animationDuration);
+                await Task.Delay((int)animationDuration);
+                
+                targetDot.IsVisible = false;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Collapsed dot animation completed - Activating: {isActivating}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error animating collapsed dot transition: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Animates the capsule indicator transition from dot to full capsule
+    /// </summary>
+    /// <param name="targetIndicator">The Border element to animate</param>
+    /// <param name="isActivating">True if activating (dot to capsule), false if deactivating</param>
+    private async Task AnimateIndicatorTransition(Border? targetIndicator, bool isActivating)
+    {
+        if (targetIndicator == null) return;
+
+        try
+        {
+            const uint animationDuration = 300; // milliseconds
+            const double dotSize = 4.0;
+            const double capsuleHeight = 20.0;
+
+            if (isActivating)
+            {
+                // Animation from dot to capsule: start as dot, grow to capsule
+                targetIndicator.HeightRequest = dotSize;
+                targetIndicator.WidthRequest = dotSize;
+                targetIndicator.IsVisible = true;
+
+                // Create custom animation for height
+                var heightAnimation = new Animation(
+                    v => targetIndicator.HeightRequest = v,
+                    dotSize,
+                    capsuleHeight,
+                    Easing.CubicOut
+                );
+
+                // Create custom animation for width (stays same)
+                var widthAnimation = new Animation(
+                    v => targetIndicator.WidthRequest = v,
+                    dotSize,
+                    dotSize,
+                    Easing.CubicOut
+                );
+
+                // Combine animations
+                var parentAnimation = new Animation();
+                parentAnimation.Add(0, 1, heightAnimation);
+                parentAnimation.Add(0, 1, widthAnimation);
+
+                // Start animation
+                parentAnimation.Commit(targetIndicator, "CapsuleActivation", length: animationDuration);
+                await Task.Delay((int)animationDuration);
+            }
+            else
+            {
+                // Animation from capsule to dot: shrink to dot, then hide
+                var heightAnimation = new Animation(
+                    v => targetIndicator.HeightRequest = v,
+                    capsuleHeight,
+                    dotSize,
+                    Easing.CubicIn
+                );
+
+                var widthAnimation = new Animation(
+                    v => targetIndicator.WidthRequest = v,
+                    dotSize,
+                    dotSize,
+                    Easing.CubicIn
+                );
+
+                // Combine animations
+                var parentAnimation = new Animation();
+                parentAnimation.Add(0, 1, heightAnimation);
+                parentAnimation.Add(0, 1, widthAnimation);
+
+                // Start animation
+                parentAnimation.Commit(targetIndicator, "CapsuleDeactivation", length: animationDuration);
+                await Task.Delay((int)animationDuration);
+                
+                targetIndicator.IsVisible = false;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Indicator animation completed - Activating: {isActivating}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error animating indicator transition: {ex.Message}");
+        }
     }
 
     #endregion

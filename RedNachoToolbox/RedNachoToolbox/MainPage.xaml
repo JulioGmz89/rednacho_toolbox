@@ -17,6 +17,12 @@
             <Setter Property="HeightRequest" Value="48" />
             <Setter Property="HorizontalOptions" Value="Fill" />
         </Style>
+        
+        <!-- Active Button Frame Style with subtle background color -->
+        <Style x:Key="ActiveButtonFrame" TargetType="Frame" BasedOn="{StaticResource InteractiveButtonFrame}">
+            <Setter Property="BackgroundColor" Value="#1A2A5E" />
+            <Setter Property="Opacity" Value="0.1" />
+        </Style>
     </ContentPage.Resources>
 
     <Grid>
@@ -51,7 +57,8 @@
                             
                             <!-- Dashboard Button - Collapsed -->
                             <Grid HeightRequest="40" WidthRequest="40" HorizontalOptions="Center">
-                                <Frame Style="{StaticResource InteractiveButtonFrame}" 
+                                <Frame x:Name="DashboardButtonFrameCollapsed" 
+                                       Style="{StaticResource InteractiveButtonFrame}" 
                                        HeightRequest="40" 
                                        WidthRequest="40" 
                                        CornerRadius="8">
@@ -60,8 +67,8 @@
                                         <PointerGestureRecognizer PointerEntered="OnDashboardPointerEntered" 
                                                                 PointerExited="OnDashboardPointerExited" />
                                     </Frame.GestureRecognizers>
-                                    <Image WidthRequest="24"
-                                           HeightRequest="24"
+                                    <Image WidthRequest="18"
+                                           HeightRequest="18"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center">
                                         <Image.Source>
@@ -72,6 +79,16 @@
                                         </Image.Source>
                                     </Image>
                                 </Frame>
+                                
+                                <!-- Active Page Indicator - Collapsed Dot -->
+                                <Ellipse x:Name="DashboardIndicatorDotCollapsed"
+                                         WidthRequest="8"
+                                         HeightRequest="8"
+                                         Fill="#CC333B"
+                                         VerticalOptions="Start"
+                                         HorizontalOptions="Start"
+                                         Margin="4,4,0,0"
+                                         IsVisible="{Binding IsDashboardActive}" />
                             </Grid>
                             
                             <!-- Divider between Dashboard and Documentation -->
@@ -81,7 +98,8 @@
                             
                             <!-- Documentation Button - Collapsed -->
                             <Grid HeightRequest="40" WidthRequest="40" HorizontalOptions="Center">
-                                <Frame Style="{StaticResource InteractiveButtonFrame}" 
+                                <Frame x:Name="DocumentationButtonFrameCollapsed" 
+                                       Style="{StaticResource InteractiveButtonFrame}" 
                                        HeightRequest="40" 
                                        WidthRequest="40" 
                                        CornerRadius="8">
@@ -90,8 +108,8 @@
                                         <PointerGestureRecognizer PointerEntered="OnDocumentationPointerEntered" 
                                                                 PointerExited="OnDocumentationPointerExited" />
                                     </Frame.GestureRecognizers>
-                                    <Image WidthRequest="24"
-                                           HeightRequest="24"
+                                    <Image WidthRequest="18"
+                                           HeightRequest="18"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center">
                                         <Image.Source>
@@ -102,6 +120,16 @@
                                         </Image.Source>
                                     </Image>
                                 </Frame>
+                                
+                                <!-- Active Page Indicator - Collapsed Dot -->
+                                <Ellipse x:Name="DocumentationIndicatorDotCollapsed"
+                                         WidthRequest="8"
+                                         HeightRequest="8"
+                                         Fill="#CC333B"
+                                         VerticalOptions="Start"
+                                         HorizontalOptions="Start"
+                                         Margin="4,4,0,0"
+                                         IsVisible="{Binding IsDocumentationActive}" />
                             </Grid>
                             
                         </VerticalStackLayout>
@@ -121,14 +149,29 @@
                         <VerticalStackLayout Spacing="8" IsVisible="{Binding IsSidebarCollapsed, Converter={StaticResource InvertedBoolConverter}}">
                             
                             <!-- Dashboard Button -->
-                            <Frame Style="{StaticResource InteractiveButtonFrame}">
+                            <Frame x:Name="DashboardButtonFrame" Style="{StaticResource InteractiveButtonFrame}">
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnDashboardClicked" />
                                     <PointerGestureRecognizer PointerEntered="OnDashboardPointerEntered" 
                                                             PointerExited="OnDashboardPointerExited" />
                                 </Frame.GestureRecognizers>
-                                <Grid ColumnDefinitions="32, *" ColumnSpacing="12" Padding="12,8">
-                                    <Image Grid.Column="0"
+                                <Grid ColumnDefinitions="4, 28, *" ColumnSpacing="8" Padding="8,8">
+                                    <!-- Active Page Indicator - Capsule Shape -->
+                                    <Border x:Name="DashboardIndicatorCapsule"
+                                            Grid.Column="0"
+                                            WidthRequest="4"
+                                            HeightRequest="20"
+                                            BackgroundColor="#CC333B"
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="Center"
+                                            StrokeThickness="0"
+                                            IsVisible="{Binding IsDashboardActive}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="2" />
+                                        </Border.StrokeShape>
+                                    </Border>
+                                    
+                                    <Image Grid.Column="1"
                                            WidthRequest="20"
                                            HeightRequest="20"
                                            VerticalOptions="Center">
@@ -139,7 +182,7 @@
                                             </MultiBinding>
                                         </Image.Source>
                                     </Image>
-                                    <Label Grid.Column="1"
+                                    <Label Grid.Column="2"
                                            Text="Dashboard"
                                            TextColor="{DynamicResource TextColor}"
                                            VerticalOptions="Center"
@@ -154,14 +197,29 @@
                                      Margin="8,8,8,8" />
                             
                             <!-- Documentation Button -->
-                            <Frame Style="{StaticResource InteractiveButtonFrame}">
+                            <Frame x:Name="DocumentationButtonFrame" Style="{StaticResource InteractiveButtonFrame}">
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnDocumentationClicked" />
                                     <PointerGestureRecognizer PointerEntered="OnDocumentationPointerEntered" 
                                                             PointerExited="OnDocumentationPointerExited" />
                                 </Frame.GestureRecognizers>
-                                <Grid ColumnDefinitions="32, *" ColumnSpacing="12" Padding="12,8">
-                                    <Image Grid.Column="0"
+                                <Grid ColumnDefinitions="4, 28, *" ColumnSpacing="8" Padding="8,8">
+                                    <!-- Active Page Indicator - Capsule Shape -->
+                                    <Border x:Name="DocumentationIndicatorCapsule"
+                                            Grid.Column="0"
+                                            WidthRequest="4"
+                                            HeightRequest="20"
+                                            BackgroundColor="#CC333B"
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="Center"
+                                            StrokeThickness="0"
+                                            IsVisible="{Binding IsDocumentationActive}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="2" />
+                                        </Border.StrokeShape>
+                                    </Border>
+                                    
+                                    <Image Grid.Column="1"
                                            WidthRequest="20"
                                            HeightRequest="20"
                                            VerticalOptions="Center">
@@ -172,7 +230,7 @@
                                             </MultiBinding>
                                         </Image.Source>
                                     </Image>
-                                    <Label Grid.Column="1"
+                                    <Label Grid.Column="2"
                                            Text="Documentation"
                                            TextColor="{DynamicResource TextColor}"
                                            VerticalOptions="Center"
@@ -200,8 +258,17 @@
                                 <PointerGestureRecognizer PointerEntered="OnSettingsPointerEntered" 
                                                         PointerExited="OnSettingsPointerExited" />
                             </Frame.GestureRecognizers>
-                            <Grid ColumnDefinitions="32, *" ColumnSpacing="12" Padding="12,8">
-                                <Image Grid.Column="0"
+                            <Grid ColumnDefinitions="4, 28, *" ColumnSpacing="8" Padding="8,8">
+                                <!-- Active Page Indicator -->
+                                <Ellipse Grid.Column="0"
+                                         WidthRequest="4"
+                                         HeightRequest="4"
+                                         Fill="#CC333B"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="Center"
+                                         IsVisible="{Binding IsSettingsActive}" />
+                                
+                                <Image Grid.Column="1"
                                        WidthRequest="20"
                                        HeightRequest="20"
                                        VerticalOptions="Center">
@@ -212,7 +279,7 @@
                                         </MultiBinding>
                                     </Image.Source>
                                 </Image>
-                                <Label Grid.Column="1"
+                                <Label Grid.Column="2"
                                        Text="Settings"
                                        TextColor="{DynamicResource TextColor}"
                                        VerticalOptions="Center"
@@ -251,6 +318,15 @@
                                 </Image.Source>
                             </Image>
                         </Frame>
+                        
+                        <!-- Active Page Indicator - Collapsed -->
+                        <Ellipse WidthRequest="6"
+                                 HeightRequest="6"
+                                 Fill="#CC333B"
+                                 VerticalOptions="Start"
+                                 HorizontalOptions="Start"
+                                 Margin="2,2,0,0"
+                                 IsVisible="{Binding IsSettingsActive}" />
                     </Grid>
                 </Border>
             </Grid>

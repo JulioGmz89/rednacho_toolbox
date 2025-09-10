@@ -13,12 +13,12 @@ public class BoolToWidthConverter : IValueConverter
         if (value is bool isCollapsed)
         {
             // Collapsed sidebar: 80px width (just enough for logo)
-            // Expanded sidebar: 250px width (full sidebar)
-            return new GridLength(isCollapsed ? 80 : 250);
+            // Expanded sidebar: 280px width (wider for better spacing)
+            return new GridLength(isCollapsed ? 80 : 280);
         }
         
         // Default to expanded width
-        return new GridLength(250);
+        return new GridLength(280);
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

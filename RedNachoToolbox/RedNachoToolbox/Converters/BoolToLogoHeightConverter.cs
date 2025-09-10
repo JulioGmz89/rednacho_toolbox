@@ -13,12 +13,12 @@ public class BoolToLogoHeightConverter : IValueConverter
         if (value is bool isCollapsed)
         {
             // Collapsed sidebar: 48px height (compact logo)
-            // Expanded sidebar: 80px height (normal logo)
-            return isCollapsed ? 48 : 80;
+            // Expanded sidebar: 64px height (smaller logo for wider sidebar)
+            return isCollapsed ? 48 : 64;
         }
         
-        // Default to normal height
-        return 80;
+        // Default to smaller height
+        return 64;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
