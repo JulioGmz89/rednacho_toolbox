@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
+             x:Class="RedNachoToolbox.Views.DashboardView"
+             x:DataType="viewmodels:MainViewModel">
+    
+    <!-- Use ScrollView with VerticalStackLayout for better control -->
+    <ScrollView BackgroundColor="Transparent">
+        <VerticalStackLayout Padding="20" Spacing="16">
+            
+            <!-- Recently Used Section -->
+            <VerticalStackLayout Spacing="8"
+                                 IsVisible="{Binding HasRecentlyUsedTools}">
+                <Label Text="Recently Used"
+                       FontSize="24"
+                       Style="{StaticResource SubHeaderStyle}"
+                       HorizontalOptions="Start"/>
+                <CollectionView x:Name="RecentToolsCollectionView"
+                                ItemsSource="{Binding RecentlyUsedTools}"
+                                ItemTemplate="{StaticResource ToolCardTemplate}"
+                                BackgroundColor="Transparent"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedTool}"
+                                SelectionChanged="OnRecentToolSelectionChanged"
+                                HeightRequest="155">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical"
+                                         Span="3"
+                                         HorizontalItemSpacing="16"
+                                         VerticalItemSpacing="16"/>
+                    </CollectionView.ItemsLayout>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- Divider -->
+            <BoxView HeightRequest="1"
+                     BackgroundColor="{DynamicResource BorderColorLight}"
+                     HorizontalOptions="Fill"
+                     Margin="0,8"
+                     IsVisible="{Binding HasRecentlyUsedTools}"/>
+
+            <!-- All Applications Header -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="All Applications"
+                       FontSize="24"
+                       Style="{StaticResource SubHeaderStyle}"
+                       HorizontalOptions="Start"/>
+                <Label Text="{Binding FilteredToolsCount, StringFormat='Showing {0} tools'}"
+                       FontSize="14"
+                       Style="{StaticResource SecondaryTextStyle}"
+                       HorizontalOptions="Start"/>
+            </VerticalStackLayout>
+
+            <!-- Search and Filter Section -->
+            <Grid ColumnDefinitions="*, Auto"
+                  ColumnSpacing="16">
+                <SearchBar Grid.Column="0"
+                           Text="{Binding SearchText}"
+                           Placeholder="Search tools..."
+                           BackgroundColor="{DynamicResource InputBackgroundColor}"
+                           TextColor="{DynamicResource InputTextColor}"
+                           PlaceholderColor="{DynamicResource InputPlaceholderColor}"
+                           CancelButtonColor="{DynamicResource PrimaryRed}"
+                           VerticalOptions="Center"
+                           SearchButtonPressed="OnSearchButtonPressed"
+                           TextChanged="OnSearchTextChanged" />
+                <Button Grid.Column="1"
+                        Text="Clear"
+                        Clicked="OnClearFiltersClicked"
+                        BackgroundColor="{DynamicResource ButtonBackgroundColor}"
+                        TextColor="{DynamicResource ButtonTextColor}"
+                        BorderColor="{DynamicResource ButtonBorderColor}"
+                        BorderWidth="1"
+                        CornerRadius="8"
+                        Padding="16,8"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding HasActiveFilters}"/>
+            </Grid>
+
+            <!-- All Applications CollectionView with 3-column grid -->
+            <CollectionView x:Name="AllToolsCollectionView"
+                            ItemsSource="{Binding FilteredTools}"
+                            ItemTemplate="{StaticResource ToolCardTemplate}"
+                            BackgroundColor="Transparent"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedTool}"
+                            SelectionChanged="OnToolSelectionChanged">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical"
+                                     Span="3"
+                                     HorizontalItemSpacing="16"
+                                     VerticalItemSpacing="16"/>
+                </CollectionView.ItemsLayout>
+                
+                <!-- Empty View when no tools match filters -->
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="40"
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="Center">
+                        <Label Text="🔍"
+                               FontSize="48"
+                               HorizontalOptions="Center"
+                               Margin="0,0,0,16"/>
+                        <Label Text="No tools found"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource TextColor}"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Try adjusting your search or clearing filters"
+                               FontSize="14"
+                               TextColor="{DynamicResource TextColorSecondary}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"/>
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+
+            <!-- Loading indicator -->
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{DynamicResource PrimaryRed}"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"/>
+                               
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>
