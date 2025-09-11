@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using Microsoft.Maui;
 
 namespace RedNachoToolbox;
 
@@ -27,6 +28,43 @@ public partial class SettingsPage : ContentPage
                 _isDarkTheme = value;
                 OnPropertyChanged();
             }
+        }
+    }
+
+    /// <summary>
+    /// Updates specific resource keys in all merged dictionaries so DynamicResource lookups
+    /// that were defined there (e.g., in Colors.xaml) get refreshed immediately.
+    /// </summary>
+    private static void PropagateThemeKeys(ResourceDictionary resources, params string[] keys)
+    {
+        try
+        {
+            if (resources == null || keys == null || keys.Length == 0)
+                return;
+
+            foreach (var key in keys)
+            {
+                if (!resources.ContainsKey(key))
+                    continue;
+
+                var value = resources[key];
+
+                foreach (var dict in resources.MergedDictionaries)
+                {
+                    try
+                    {
+                        if (dict.ContainsKey(key))
+                        {
+                            dict[key] = value;
+                        }
+                    }
+                    catch { /* ignore per-dictionary errors */ }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"PropagateThemeKeys error: {ex.Message}");
         }
     }
 
@@ -179,6 +217,8 @@ public partial class SettingsPage : ContentPage
         System.Diagnostics.Debug.WriteLine("Calling ApplyTheme...");
         ApplyTheme(isDarkMode);
         System.Diagnostics.Debug.WriteLine("ApplyTheme completed");
+        // Notify views to refresh theme-dependent templates
+        Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
         
         // Save theme preference
         System.Diagnostics.Debug.WriteLine("Saving theme preference...");
@@ -290,6 +330,15 @@ public partial class SettingsPage : ContentPage
             {
                 ApplyThemeColors(isDarkTheme);
                 System.Diagnostics.Debug.WriteLine("✓ Theme colors applied successfully");
+                // Ensure keys defined in merged dictionaries (e.g., Colors.xaml) are also updated
+                PropagateThemeKeys(Application.Current.Resources,
+                    "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
+                    "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor");
+                // Set UserAppTheme to trigger control refreshes that listen to OS theme changes
+                Application.Current.UserAppTheme = isDarkTheme ? AppTheme.Dark : AppTheme.Light;
+                Application.Current.MainPage?.ForceLayout();
+                // Notify views to refresh theme-dependent templates
+                Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
             }
             catch (Exception colorEx)
             {
@@ -396,6 +445,8 @@ public partial class SettingsPage : ContentPage
             resources["PageBackgroundColor"] = Color.FromArgb("#121212");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#1E1E1E");
             resources["CardBackgroundColor"] = Color.FromArgb("#2A2A2A");
+            resources["CardAccentBackgroundColor"] = Color.FromArgb("#333333");
+            resources["CardShadowColor"] = Color.FromArgb("#666666");
             resources["ContentBackgroundColor"] = Color.FromArgb("#1A1A1A");
             
             // Text Colors
@@ -465,6 +516,8 @@ public partial class SettingsPage : ContentPage
             resources["PageBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#F8F9FA");
             resources["CardBackgroundColor"] = Color.FromArgb("#FFFFFF");
+            resources["CardAccentBackgroundColor"] = Color.FromArgb("#F2F2F2");
+            resources["CardShadowColor"] = Color.FromArgb("#ACACAC");
             resources["ContentBackgroundColor"] = Color.FromArgb("#FAFAFA");
             
             // Text Colors
@@ -620,6 +673,13 @@ public partial class SettingsPage : ContentPage
 
             // Apply theme colors directly to resources
             ApplyThemeColorsStatic(isDarkTheme, resources);
+            // Ensure keys defined in merged dictionaries (e.g., Colors.xaml) are also updated
+            PropagateThemeKeys(resources,
+                "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
+                "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor");
+            // Also set UserAppTheme to ensure consistent visual refresh across controls
+            Application.Current.UserAppTheme = isDarkTheme ? AppTheme.Dark : AppTheme.Light;
+            Application.Current.MainPage?.ForceLayout();
 
             System.Diagnostics.Debug.WriteLine($"✓ Saved theme applied successfully: {(isDarkTheme ? "Dark" : "Light")}");
             System.Diagnostics.Debug.WriteLine("=== ApplySavedTheme END ===");
@@ -644,6 +704,8 @@ public partial class SettingsPage : ContentPage
             resources["PageBackgroundColor"] = Color.FromArgb("#121212");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#1E1E1E");
             resources["CardBackgroundColor"] = Color.FromArgb("#2A2A2A");
+            resources["CardAccentBackgroundColor"] = Color.FromArgb("#333333");
+            resources["CardShadowColor"] = Color.FromArgb("#666666");
             resources["ContentBackgroundColor"] = Color.FromArgb("#1A1A1A");
             resources["TextColor"] = Color.FromArgb("#FFFFFF");
             resources["TextColorSecondary"] = Color.FromArgb("#B3B3B3");
@@ -690,6 +752,8 @@ public partial class SettingsPage : ContentPage
             resources["PageBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#F8F9FA");
             resources["CardBackgroundColor"] = Color.FromArgb("#FFFFFF");
+            resources["CardAccentBackgroundColor"] = Color.FromArgb("#F2F2F2");
+            resources["CardShadowColor"] = Color.FromArgb("#ACACAC");
             resources["ContentBackgroundColor"] = Color.FromArgb("#FAFAFA");
             resources["TextColor"] = Color.FromArgb("#212529");
             resources["TextColorSecondary"] = Color.FromArgb("#6C757D");

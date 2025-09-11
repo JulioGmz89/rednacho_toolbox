@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using RedNachoToolbox.Models;
 
 namespace RedNachoToolbox.ViewModels;
@@ -11,6 +12,7 @@ public class MainViewModel : BaseViewModel
 {
     private ObservableCollection<ToolInfo> _tools;
     private ObservableCollection<ToolInfo> _filteredTools;
+    private ObservableCollection<ToolInfo> _recentlyUsedTools;
     private string _searchText = string.Empty;
     private ToolCategory? _selectedCategory;
     private ToolInfo? _selectedTool;
@@ -26,12 +28,16 @@ public class MainViewModel : BaseViewModel
         Title = "Red Nacho ToolBox";
         _tools = new ObservableCollection<ToolInfo>();
         _filteredTools = new ObservableCollection<ToolInfo>();
+        _recentlyUsedTools = new ObservableCollection<ToolInfo>();
         
         // Initialize sidebar and theme state from preferences
         LoadPreferences();
         
         // Initialize with sample data
         LoadSampleTools();
+        
+        // Initialize recently used tools with sample data
+        LoadRecentlyUsedTools();
     }
 
     /// <summary>
@@ -50,6 +56,15 @@ public class MainViewModel : BaseViewModel
     {
         get => _filteredTools;
         private set => SetProperty(ref _filteredTools, value);
+    }
+
+    /// <summary>
+    /// Gets the collection of recently used tools (maximum 3 items).
+    /// </summary>
+    public ObservableCollection<ToolInfo> RecentlyUsedTools
+    {
+        get => _recentlyUsedTools;
+        private set => SetProperty(ref _recentlyUsedTools, value);
     }
 
     /// <summary>
@@ -107,6 +122,11 @@ public class MainViewModel : BaseViewModel
     /// Gets a value indicating whether there are active filters applied.
     /// </summary>
     public bool HasActiveFilters => !string.IsNullOrWhiteSpace(SearchText) || SelectedCategory.HasValue;
+
+    /// <summary>
+    /// Gets a value indicating whether there are recently used tools to display.
+    /// </summary>
+    public bool HasRecentlyUsedTools => RecentlyUsedTools.Count > 0;
 
     /// <summary>
     /// Gets or sets whether the sidebar is collapsed.
@@ -439,5 +459,53 @@ public class MainViewModel : BaseViewModel
     public void RefreshTools()
     {
         ApplyFilters();
+    }
+
+    /// <summary>
+    /// Adds a tool to the recently used tools collection.
+    /// Maintains a maximum of 3 items, with the most recent at the top.
+    /// </summary>
+    /// <param name="tool">The tool to add to recently used</param>
+    public void AddToRecentlyUsed(ToolInfo tool)
+    {
+        if (tool == null) return;
+
+        // Remove the tool if it already exists in the list
+        var existingTool = RecentlyUsedTools.FirstOrDefault(t => t.Name == tool.Name);
+        if (existingTool != null)
+        {
+            RecentlyUsedTools.Remove(existingTool);
+        }
+
+        // Add the tool to the beginning of the list
+        RecentlyUsedTools.Insert(0, tool);
+
+        // Keep only the 3 most recent tools
+        while (RecentlyUsedTools.Count > 3)
+        {
+            RecentlyUsedTools.RemoveAt(RecentlyUsedTools.Count - 1);
+        }
+
+        // Notify property change for HasRecentlyUsedTools
+        OnPropertyChanged(nameof(HasRecentlyUsedTools));
+
+        System.Diagnostics.Debug.WriteLine($"Added '{tool.Name}' to recently used tools. Total: {RecentlyUsedTools.Count}");
+    }
+
+    /// <summary>
+    /// Loads sample recently used tools for demonstration purposes.
+    /// In a real application, this would load from preferences or local storage.
+    /// </summary>
+    private void LoadRecentlyUsedTools()
+    {
+        // Add some sample recently used tools (last 3 tools from the sample data)
+        var sampleRecentTools = Tools.TakeLast(3).Reverse().ToList();
+        
+        foreach (var tool in sampleRecentTools)
+        {
+            RecentlyUsedTools.Add(tool);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"Loaded {RecentlyUsedTools.Count} recently used tools");
     }
 }

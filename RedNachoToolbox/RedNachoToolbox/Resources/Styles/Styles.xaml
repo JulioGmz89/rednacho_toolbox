@@ -424,4 +424,26 @@
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
 
+    <!-- Theme-aware colors for Dashboard and Tool Cards -->
+    <Color x:Key="PrimaryRed">#CC333B</Color>
+    
+    <!-- Additional Gray colors for better theme support -->
+    <Color x:Key="Gray800">#2D2D2D</Color>
+    
+    <!-- Light Theme Colors -->
+    <Color x:Key="LightPageBackground">#FFFFFF</Color>
+    <Color x:Key="LightCardBackground">#FFFFFF</Color>
+    <Color x:Key="LightTextPrimary">#212121</Color>
+    <Color x:Key="LightTextSecondary">#6E6E6E</Color>
+    <Color x:Key="LightBorderLight">#E1E1E1</Color>
+    <Color x:Key="LightHighlight">#F5F5F5</Color>
+    
+    <!-- Dark Theme Colors -->
+    <Color x:Key="DarkPageBackground">#141414</Color>
+    <Color x:Key="DarkCardBackground">#212121</Color>
+    <Color x:Key="DarkTextPrimary">#FFFFFF</Color>
+    <Color x:Key="DarkTextSecondary">#ACACAC</Color>
+    <Color x:Key="DarkBorderLight">#404040</Color>
+    <Color x:Key="DarkHighlight">#2D2D2D</Color>
+
 </ResourceDictionary>

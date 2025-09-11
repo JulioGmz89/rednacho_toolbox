@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -42,4 +42,55 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <!-- Default light theme semantic colors (overridden at runtime by SettingsPage) -->
+    <Color x:Key="PrimaryRed">#CC333B</Color>
+    <Color x:Key="PageBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="SidebarBackgroundColor">#F8F9FA</Color>
+    <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="CardAccentBackgroundColor">#F2F2F2</Color>
+    <Color x:Key="CardShadowColor">#ACACAC</Color>
+    <Color x:Key="ContentBackgroundColor">#FAFAFA</Color>
+
+    <Color x:Key="TextColor">#212529</Color>
+    <Color x:Key="TextColorSecondary">#6C757D</Color>
+    <Color x:Key="TextColorTertiary">#ADB5BD</Color>
+    <Color x:Key="TextColorDisabled">#CED4DA</Color>
+
+    <Color x:Key="ButtonBackgroundColor">#F8F9FA</Color>
+    <Color x:Key="ButtonTextColor">#212529</Color>
+    <Color x:Key="ButtonBorderColor">#DEE2E6</Color>
+    <Color x:Key="ButtonHoverBackgroundColor">#E9ECEF</Color>
+    <Color x:Key="ButtonPressedBackgroundColor">#DEE2E6</Color>
+
+    <Color x:Key="BorderColorLight">#DEE2E6</Color>
+    <Color x:Key="BorderColorMedium">#ADB5BD</Color>
+    <Color x:Key="BorderColorDark">#6C757D</Color>
+
+    <Color x:Key="InputBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="InputBorderColor">#CED4DA</Color>
+    <Color x:Key="InputTextColor">#212529</Color>
+    <Color x:Key="InputPlaceholderColor">#6C757D</Color>
+    <Color x:Key="InputFocusBorderColor">#CC333B</Color>
+
+    <Color x:Key="SuccessColor">#198754</Color>
+    <Color x:Key="WarningColor">#FFC107</Color>
+    <Color x:Key="ErrorColor">#DC3545</Color>
+    <Color x:Key="InfoColor">#0DCAF0</Color>
+
+    <Color x:Key="SelectionColor">#CC333B</Color>
+    <Color x:Key="SelectionBackgroundColor">#FFF2F2</Color>
+    <Color x:Key="HighlightColor">#E9ECEF</Color>
+
+    <Color x:Key="NavigationBackgroundColor">#F8F9FA</Color>
+    <Color x:Key="NavigationTextColor">#212529</Color>
+    <Color x:Key="NavigationSelectedBackgroundColor">#CC333B</Color>
+    <Color x:Key="NavigationSelectedTextColor">#FFFFFF</Color>
+    <Color x:Key="NavigationHoverBackgroundColor">#E9ECEF</Color>
+
+    <Color x:Key="SettingsBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="SettingsBorderColor">#DEE2E6</Color>
+    <Color x:Key="SettingsTextColor">#212529</Color>
+    <Color x:Key="SettingsSecondaryTextColor">#6C757D</Color>
+
 </ResourceDictionary>

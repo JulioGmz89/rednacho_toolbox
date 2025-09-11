@@ -4,8 +4,7 @@
              xmlns:views="clr-namespace:RedNachoToolbox.Views"
              xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
              x:Class="RedNachoToolbox.MainPage"
-             x:DataType="viewmodels:MainViewModel"
-             Title="Red Nacho ToolBox">
+             x:DataType="viewmodels:MainViewModel">
 
     <ContentPage.Resources>
         <!-- Interactive Button Frame Style with Hover and Active States -->
@@ -336,8 +335,8 @@
         <Border Grid.Column="1"
                 BackgroundColor="{DynamicResource PageBackgroundColor}"
                 StrokeThickness="0">
-            <!-- All Tools View -->
-            <views:AllToolsView BindingContext="{Binding}" />
+            <!-- Dashboard View -->
+            <views:DashboardView BindingContext="{Binding}" />
         </Border>
     </Grid>
 

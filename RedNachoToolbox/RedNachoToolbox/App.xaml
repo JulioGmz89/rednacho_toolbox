@@ -20,33 +20,78 @@
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:ThemeIconConverter x:Key="ThemeIconConverter" />
             
+            <!-- Global Font Styles - Inter Font Family -->
+            <Style TargetType="Label">
+                <Setter Property="FontFamily" Value="InterRegular" />
+            </Style>
+            
+            <Style TargetType="Button">
+                <Setter Property="FontFamily" Value="InterMedium" />
+            </Style>
+            
+            <Style TargetType="Entry">
+                <Setter Property="FontFamily" Value="InterRegular" />
+            </Style>
+            
+            <Style TargetType="SearchBar">
+                <Setter Property="FontFamily" Value="InterRegular" />
+            </Style>
+            
+            <!-- Specific Font Weight Styles -->
+            <Style x:Key="HeaderStyle" TargetType="Label">
+                <Setter Property="FontFamily" Value="InterBold" />
+                <Setter Property="TextColor" Value="{DynamicResource TextColor}" />
+            </Style>
+            
+            <Style x:Key="SubHeaderStyle" TargetType="Label">
+                <Setter Property="FontFamily" Value="InterSemiBold" />
+                <Setter Property="TextColor" Value="{DynamicResource TextColor}" />
+            </Style>
+            
+            <Style x:Key="BodyTextStyle" TargetType="Label">
+                <Setter Property="FontFamily" Value="InterRegular" />
+                <Setter Property="TextColor" Value="{DynamicResource TextColor}" />
+            </Style>
+            
+            <Style x:Key="SecondaryTextStyle" TargetType="Label">
+                <Setter Property="FontFamily" Value="InterRegular" />
+                <Setter Property="TextColor" Value="{DynamicResource TextColorSecondary}" />
+            </Style>
+            
+            <Style x:Key="CaptionTextStyle" TargetType="Label">
+                <Setter Property="FontFamily" Value="InterLight" />
+                <Setter Property="TextColor" Value="{DynamicResource TextColorTertiary}" />
+            </Style>
+            
             <!-- Tool Card DataTemplate -->
             <DataTemplate x:Key="ToolCardTemplate">
                 <Border BackgroundColor="{DynamicResource CardBackgroundColor}"
-                        Stroke="{DynamicResource BorderColorLight}"
-                        StrokeThickness="1"
-                        Padding="16"
-                        Margin="8"
-                        HeightRequest="120">
+                        Stroke="Transparent"
+                        StrokeThickness="0"
+                        Padding="12"
+                        Margin="0"
+                        HeightRequest="120"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Fill">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="12"/>
                     </Border.StrokeShape>
                     
                     <!-- Shadow effect for card elevation -->
                     <Border.Shadow>
-                        <Shadow Brush="{DynamicResource BorderColorMedium}"
+                        <Shadow Brush="{DynamicResource CardShadowColor}"
                                 Offset="0,2"
                                 Radius="4"
                                 Opacity="0.3"/>
                     </Border.Shadow>
                     
                     <!-- Main content grid with icon and text areas -->
-                    <Grid ColumnDefinitions="0.28*, 0.72*" 
-                          ColumnSpacing="16">
+                    <Grid ColumnDefinitions="Auto, *" 
+                          ColumnSpacing="12">
                         
-                        <!-- Icon area (28% width) -->
+                        <!-- Icon area - background box without border -->
                         <Border Grid.Column="0"
-                                BackgroundColor="{DynamicResource HighlightColor}"
+                                BackgroundColor="{DynamicResource CardAccentBackgroundColor}"
                                 VerticalOptions="Center"
                                 HorizontalOptions="Center"
                                 WidthRequest="64"
@@ -85,7 +130,7 @@
                             <!-- Tool name -->
                             <Label Text="{Binding Name}"
                                    FontSize="18"
-                                   FontAttributes="Bold"
+                                   FontFamily="InterSemiBold"
                                    TextColor="{DynamicResource TextColor}"
                                    LineBreakMode="TailTruncation"
                                    MaxLines="1"
@@ -94,6 +139,7 @@
                             <!-- Tool description -->
                             <Label Text="{Binding Description}"
                                    FontSize="14"
+                                   FontFamily="InterRegular"
                                    TextColor="{DynamicResource TextColorSecondary}"
                                    LineBreakMode="WordWrap"
                                    MaxLines="2"
@@ -102,8 +148,8 @@
                             <!-- Category indicator -->
                             <Label Text="{Binding Category, StringFormat='Category: {0}'}"
                                    FontSize="12"
+                                   FontFamily="InterItalic"
                                    TextColor="{DynamicResource TextColorTertiary}"
-                                   FontAttributes="Italic"
                                    LineBreakMode="TailTruncation"
                                    MaxLines="1"
                                    VerticalOptions="End"/>
@@ -116,14 +162,12 @@
                             <VisualState Name="Normal"/>
                             <VisualState Name="PointerOver">
                                 <VisualState.Setters>
-                                    <Setter Property="BackgroundColor" Value="{DynamicResource SelectionBackgroundColor}"/>
-                                    <Setter Property="Stroke" Value="{DynamicResource SelectionColor}"/>
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource HighlightColor}"/>
                                 </VisualState.Setters>
                             </VisualState>
                             <VisualState Name="Pressed">
                                 <VisualState.Setters>
-                                    <Setter Property="BackgroundColor" Value="{DynamicResource SelectionBackgroundColor}"/>
-                                    <Setter Property="Stroke" Value="{DynamicResource SelectionColor}"/>
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource HighlightColor}"/>
                                     <Setter Property="Opacity" Value="0.8"/>
                                 </VisualState.Setters>
                             </VisualState>
