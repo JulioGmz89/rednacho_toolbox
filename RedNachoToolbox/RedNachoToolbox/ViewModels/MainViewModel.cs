@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using RedNachoToolbox.Models;
+using RedNachoToolbox.Tools.MarkdownToPdf;
 
 namespace RedNachoToolbox.ViewModels;
 
@@ -295,6 +296,14 @@ public class MainViewModel : BaseViewModel
     {
         var sampleTools = new List<ToolInfo>
         {
+            new ToolInfo(
+                "Markdown → PDF",
+                "Convierte Markdown a PDF con estilos personalizables y vista previa.",
+                "document_outline_black.png",
+                ToolCategory.Productivity,
+                typeof(MarkdownToPdfView)
+            ),
+
             new ToolInfo(
                 "Calculator", 
                 "A powerful calculator with advanced mathematical functions and unit conversions.", 

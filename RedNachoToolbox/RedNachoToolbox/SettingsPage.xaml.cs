@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui;
+using System.Threading.Tasks;
 
 namespace RedNachoToolbox;
 
@@ -7,12 +8,53 @@ public partial class SettingsPage : ContentPage
 {
     private bool _isDarkTheme;
     private bool _isSidebarCollapsed;
+    private string _closeButtonState = "idle";
 
     public SettingsPage()
     {
         InitializeComponent();
         InitializeThemeState();
         InitializeSidebarState();
+
+        // Ensure thumb colors refresh once handlers are created
+        try
+        {
+            ThemeSwitch.Loaded += (s, e) => RefreshSwitchThumbColors();
+            SidebarCollapseSwitch.Loaded += (s, e) => RefreshSwitchThumbColors();
+        }
+        catch { /* ignore if not yet available */ }
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        // Run after layout to guarantee handler exists
+        try
+        {
+            Dispatcher.Dispatch(() => RefreshSwitchThumbColors());
+        }
+        catch { /* ignore */ }
+    }
+
+    /// <summary>
+    /// Updates the Close (X) button image based on current state (idle/hover/active) and theme
+    /// </summary>
+    /// <param name="state">One of: idle, hover, active</param>
+    private void UpdateCloseButtonImage(string state)
+    {
+        try
+        {
+            if (CloseButtonImage == null) return;
+            var theme = IsDarkTheme ? "dark" : "light";
+            var safeState = (state == "hover" || state == "active") ? state : "idle";
+            var source = $"close_settings_{safeState}_{theme}.png";
+            CloseButtonImage.Source = source;
+            System.Diagnostics.Debug.WriteLine($"Close button image set to: {source}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating close button image: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -106,6 +148,12 @@ public partial class SettingsPage : ContentPage
         VerifyThemeFilesExist();
         
         System.Diagnostics.Debug.WriteLine("=== InitializeThemeState END ===");
+
+        // Initialize close button visual for current theme
+        UpdateCloseButtonImage("idle");
+
+        // Ensure switch thumbs reflect current toggled state
+        RefreshSwitchThumbColors();
     }
 
     /// <summary>
@@ -124,6 +172,9 @@ public partial class SettingsPage : ContentPage
         System.Diagnostics.Debug.WriteLine($"Sidebar switch IsToggled set to: {SidebarCollapseSwitch.IsToggled}");
         
         System.Diagnostics.Debug.WriteLine("=== InitializeSidebarState END ===");
+
+        // Ensure switch thumbs reflect current toggled state
+        RefreshSwitchThumbColors();
     }
 
     /// <summary>
@@ -225,6 +276,9 @@ public partial class SettingsPage : ContentPage
         SaveThemePreference(isDarkMode);
         System.Diagnostics.Debug.WriteLine("Theme preference saved");
         
+        // Ensure switch thumbs reflect current toggled state
+        RefreshSwitchThumbColors();
+        
         System.Diagnostics.Debug.WriteLine("=== OnThemeSwitchToggled END ===");
     }
 
@@ -245,7 +299,53 @@ public partial class SettingsPage : ContentPage
         SaveSidebarPreference(isCollapsed);
         System.Diagnostics.Debug.WriteLine("Sidebar preference saved");
         
+        // Ensure switch thumbs reflect current toggled state
+        RefreshSwitchThumbColors();
+
         System.Diagnostics.Debug.WriteLine("=== OnSidebarCollapseSwitchToggled END ===");
+    }
+
+    /// <summary>
+    /// Pointer entered on the Close (X) button - show hover visual
+    /// </summary>
+    private void OnClosePointerEntered(object sender, PointerEventArgs e)
+    {
+        _closeButtonState = "hover";
+        UpdateCloseButtonImage(_closeButtonState);
+    }
+
+    /// <summary>
+    /// Pointer exited the Close (X) button - return to idle
+    /// </summary>
+    private void OnClosePointerExited(object sender, PointerEventArgs e)
+    {
+        _closeButtonState = "idle";
+        UpdateCloseButtonImage(_closeButtonState);
+    }
+
+    /// <summary>
+    /// Tapped the Close (X) button - show active visual and navigate back
+    /// </summary>
+    private async void OnCloseTapped(object sender, EventArgs e)
+    {
+        try
+        {
+            _closeButtonState = "active";
+            UpdateCloseButtonImage(_closeButtonState);
+            await Task.Delay(120);
+
+            // Reuse back navigation with robust error handling
+            OnBackButtonClicked(sender, EventArgs.Empty);
+        }
+        catch
+        {
+            // ignore
+        }
+        finally
+        {
+            _closeButtonState = "idle";
+            UpdateCloseButtonImage(_closeButtonState);
+        }
     }
 
     /// <summary>
@@ -260,7 +360,17 @@ public partial class SettingsPage : ContentPage
         catch (Exception ex)
         {
             // Fallback navigation if Shell navigation fails
-            System.Diagnostics.Debug.WriteLine($"Navigation error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Navigation error: {ex}");
+            var errorDetails = $"{ex.GetType().Name}: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorDetails += $"\nInner: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+            }
+            try
+            {
+                await DisplayAlert("Navigation Error", $"Unable to go back.\n\n{errorDetails}", "OK");
+            }
+            catch { /* ignore UI errors in exceptional states */ }
             
             // Alternative navigation method
             if (Navigation.NavigationStack.Count > 1)
@@ -333,7 +443,8 @@ public partial class SettingsPage : ContentPage
                 // Ensure keys defined in merged dictionaries (e.g., Colors.xaml) are also updated
                 PropagateThemeKeys(Application.Current.Resources,
                     "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
-                    "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor");
+                    "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor",
+                    "PrimaryRed", "InteractivePrimaryColor", "InteractiveSecondaryColor", "BorderInteractiveColor");
                 // Set UserAppTheme to trigger control refreshes that listen to OS theme changes
                 Application.Current.UserAppTheme = isDarkTheme ? AppTheme.Dark : AppTheme.Light;
                 Application.Current.MainPage?.ForceLayout();
@@ -350,6 +461,12 @@ public partial class SettingsPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"Final merged dictionaries count: {mergedDictionaries.Count}");
             System.Diagnostics.Debug.WriteLine($"✓ Theme applied successfully: {(isDarkTheme ? "Dark" : "Light")}");
             System.Diagnostics.Debug.WriteLine("=== ApplyTheme END ===");
+
+            // Refresh close button visual for new theme
+            UpdateCloseButtonImage(_closeButtonState);
+
+            // Ensure switch thumbs reflect current toggled state
+            RefreshSwitchThumbColors();
         }
         catch (Exception ex)
         {
@@ -438,8 +555,8 @@ public partial class SettingsPage : ContentPage
             // Apply Dark Theme Colors
             System.Diagnostics.Debug.WriteLine("Applying dark theme colors...");
             
-            // Primary Colors
-            resources["PrimaryRed"] = Color.FromArgb("#CC333B");
+            // Brand / Primary Colors
+            resources["PrimaryRed"] = Color.FromArgb("#E57373"); // Softer brand red for dark per MejoraDiseñoUI
             
             // Background Colors
             resources["PageBackgroundColor"] = Color.FromArgb("#121212");
@@ -449,11 +566,11 @@ public partial class SettingsPage : ContentPage
             resources["CardShadowColor"] = Color.FromArgb("#666666");
             resources["ContentBackgroundColor"] = Color.FromArgb("#1A1A1A");
             
-            // Text Colors
-            resources["TextColor"] = Color.FromArgb("#FFFFFF");
-            resources["TextColorSecondary"] = Color.FromArgb("#B3B3B3");
-            resources["TextColorTertiary"] = Color.FromArgb("#808080");
-            resources["TextColorDisabled"] = Color.FromArgb("#4D4D4D");
+            // Text Colors (ergonomic dark)
+            resources["TextColor"] = Color.FromArgb("#E0E0E0");
+            resources["TextColorSecondary"] = Color.FromArgb("#BDBDBD");
+            resources["TextColorTertiary"] = Color.FromArgb("#757575"); // placeholder/tertiary
+            resources["TextColorDisabled"] = Color.FromArgb("#616161");
             
             // Button Colors
             resources["ButtonBackgroundColor"] = Color.FromArgb("#3A3A3A");
@@ -461,24 +578,29 @@ public partial class SettingsPage : ContentPage
             resources["ButtonBorderColor"] = Color.FromArgb("#555555");
             resources["ButtonHoverBackgroundColor"] = Color.FromArgb("#4A4A4A");
             resources["ButtonPressedBackgroundColor"] = Color.FromArgb("#2A2A2A");
+            // Interactive tokens (dark)
+            resources["InteractivePrimaryColor"] = Color.FromArgb("#90CAF9");
+            resources["InteractiveSecondaryColor"] = Color.FromArgb("#81D4FA");
+            resources["BorderInteractiveColor"] = Color.FromArgb("#42A5F5");
+            resources["TextInteractiveColor"] = Color.FromArgb("#121212");
             
-            // Primary Button Colors
-            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#CC333B");
-            resources["PrimaryButtonTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#B52D35");
-            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#A02730");
+            // Primary Button Colors (interactive blue in dark)
+            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#90CAF9");
+            resources["PrimaryButtonTextColor"] = Color.FromArgb("#121212");
+            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#81D4FA");
+            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#42A5F5");
             
-            // Border Colors
-            resources["BorderColorLight"] = Color.FromArgb("#444444");
+            // Border Colors (primary border ~ #3C3C3C)
+            resources["BorderColorLight"] = Color.FromArgb("#3C3C3C");
             resources["BorderColorMedium"] = Color.FromArgb("#666666");
             resources["BorderColorDark"] = Color.FromArgb("#333333");
             
-            // Input Colors
+            // Input Colors (focus uses interactive border)
             resources["InputBackgroundColor"] = Color.FromArgb("#2A2A2A");
-            resources["InputBorderColor"] = Color.FromArgb("#555555");
-            resources["InputTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["InputPlaceholderColor"] = Color.FromArgb("#808080");
-            resources["InputFocusBorderColor"] = Color.FromArgb("#CC333B");
+            resources["InputBorderColor"] = Color.FromArgb("#3C3C3C");
+            resources["InputTextColor"] = Color.FromArgb("#E0E0E0");
+            resources["InputPlaceholderColor"] = Color.FromArgb("#757575");
+            resources["InputFocusBorderColor"] = Color.FromArgb("#42A5F5");
             
             // Status Colors
             resources["SuccessColor"] = Color.FromArgb("#4CAF50");
@@ -486,23 +608,23 @@ public partial class SettingsPage : ContentPage
             resources["ErrorColor"] = Color.FromArgb("#F44336");
             resources["InfoColor"] = Color.FromArgb("#2196F3");
             
-            // Selection Colors
-            resources["SelectionColor"] = Color.FromArgb("#CC333B");
-            resources["SelectionBackgroundColor"] = Color.FromArgb("#3D1A1D");
-            resources["HighlightColor"] = Color.FromArgb("#4D4D4D");
+            // Selection / Hover Colors
+            resources["SelectionColor"] = Color.FromArgb("#90CAF9");
+            resources["SelectionBackgroundColor"] = Color.FromArgb("#263238");
+            resources["HighlightColor"] = Color.FromRgba(255,255,255,0.08);
             
             // Navigation Colors
             resources["NavigationBackgroundColor"] = Color.FromArgb("#1E1E1E");
-            resources["NavigationTextColor"] = Color.FromArgb("#FFFFFF");
+            resources["NavigationTextColor"] = Color.FromArgb("#E0E0E0");
             resources["NavigationSelectedBackgroundColor"] = Color.FromArgb("#CC333B");
             resources["NavigationSelectedTextColor"] = Color.FromArgb("#FFFFFF");
             resources["NavigationHoverBackgroundColor"] = Color.FromArgb("#3A3A3A");
             
             // Settings Colors
             resources["SettingsBackgroundColor"] = Color.FromArgb("#2A2A2A");
-            resources["SettingsBorderColor"] = Color.FromArgb("#444444");
-            resources["SettingsTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["SettingsSecondaryTextColor"] = Color.FromArgb("#B3B3B3");
+            resources["SettingsBorderColor"] = Color.FromArgb("#3C3C3C");
+            resources["SettingsTextColor"] = Color.FromArgb("#E0E0E0");
+            resources["SettingsSecondaryTextColor"] = Color.FromArgb("#BDBDBD");
         }
         else
         {
@@ -510,21 +632,21 @@ public partial class SettingsPage : ContentPage
             System.Diagnostics.Debug.WriteLine("Applying light theme colors...");
             
             // Primary Colors
-            resources["PrimaryRed"] = Color.FromArgb("#CC333B");
+            resources["PrimaryRed"] = Color.FromArgb("#D32F2F");
             
             // Background Colors
-            resources["PageBackgroundColor"] = Color.FromArgb("#FFFFFF");
+            resources["PageBackgroundColor"] = Color.FromArgb("#F5F5F5");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#F8F9FA");
             resources["CardBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["CardAccentBackgroundColor"] = Color.FromArgb("#F2F2F2");
             resources["CardShadowColor"] = Color.FromArgb("#ACACAC");
             resources["ContentBackgroundColor"] = Color.FromArgb("#FAFAFA");
             
-            // Text Colors
-            resources["TextColor"] = Color.FromArgb("#212529");
-            resources["TextColorSecondary"] = Color.FromArgb("#6C757D");
-            resources["TextColorTertiary"] = Color.FromArgb("#ADB5BD");
-            resources["TextColorDisabled"] = Color.FromArgb("#CED4DA");
+            // Text Colors (refined light)
+            resources["TextColor"] = Color.FromArgb("#212121");
+            resources["TextColorSecondary"] = Color.FromArgb("#616161");
+            resources["TextColorTertiary"] = Color.FromArgb("#9E9E9E");
+            resources["TextColorDisabled"] = Color.FromArgb("#BDBDBD");
             
             // Button Colors
             resources["ButtonBackgroundColor"] = Color.FromArgb("#F8F9FA");
@@ -532,24 +654,29 @@ public partial class SettingsPage : ContentPage
             resources["ButtonBorderColor"] = Color.FromArgb("#DEE2E6");
             resources["ButtonHoverBackgroundColor"] = Color.FromArgb("#E9ECEF");
             resources["ButtonPressedBackgroundColor"] = Color.FromArgb("#DEE2E6");
+            // Interactive tokens (light)
+            resources["InteractivePrimaryColor"] = Color.FromArgb("#1976D2");
+            resources["InteractiveSecondaryColor"] = Color.FromArgb("#0288D1");
+            resources["BorderInteractiveColor"] = Color.FromArgb("#2196F3");
+            resources["TextInteractiveColor"] = Color.FromArgb("#FFFFFF");
             
-            // Primary Button Colors
-            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#CC333B");
+            // Primary Button Colors (interactive blue)
+            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#1976D2");
             resources["PrimaryButtonTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#B52D35");
-            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#A02730");
+            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#0288D1");
+            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#1565C0");
             
             // Border Colors
             resources["BorderColorLight"] = Color.FromArgb("#DEE2E6");
             resources["BorderColorMedium"] = Color.FromArgb("#ADB5BD");
             resources["BorderColorDark"] = Color.FromArgb("#6C757D");
             
-            // Input Colors
+            // Input Colors (focus uses interactive border)
             resources["InputBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["InputBorderColor"] = Color.FromArgb("#CED4DA");
-            resources["InputTextColor"] = Color.FromArgb("#212529");
-            resources["InputPlaceholderColor"] = Color.FromArgb("#6C757D");
-            resources["InputFocusBorderColor"] = Color.FromArgb("#CC333B");
+            resources["InputTextColor"] = Color.FromArgb("#212121");
+            resources["InputPlaceholderColor"] = Color.FromArgb("#9E9E9E");
+            resources["InputFocusBorderColor"] = Color.FromArgb("#2196F3");
             
             // Status Colors
             resources["SuccessColor"] = Color.FromArgb("#198754");
@@ -557,15 +684,15 @@ public partial class SettingsPage : ContentPage
             resources["ErrorColor"] = Color.FromArgb("#DC3545");
             resources["InfoColor"] = Color.FromArgb("#0DCAF0");
             
-            // Selection Colors
-            resources["SelectionColor"] = Color.FromArgb("#CC333B");
-            resources["SelectionBackgroundColor"] = Color.FromArgb("#FFF2F2");
-            resources["HighlightColor"] = Color.FromArgb("#E9ECEF");
+            // Selection / Hover Colors
+            resources["SelectionColor"] = Color.FromArgb("#1976D2");
+            resources["SelectionBackgroundColor"] = Color.FromArgb("#E8F0FE");
+            resources["HighlightColor"] = Color.FromRgba(0,0,0,0.04);
             
             // Navigation Colors
             resources["NavigationBackgroundColor"] = Color.FromArgb("#F8F9FA");
-            resources["NavigationTextColor"] = Color.FromArgb("#212529");
-            resources["NavigationSelectedBackgroundColor"] = Color.FromArgb("#CC333B");
+            resources["NavigationTextColor"] = Color.FromArgb("#212121");
+            resources["NavigationSelectedBackgroundColor"] = Color.FromArgb("#E8F0FE");
             resources["NavigationSelectedTextColor"] = Color.FromArgb("#FFFFFF");
             resources["NavigationHoverBackgroundColor"] = Color.FromArgb("#E9ECEF");
             
@@ -581,6 +708,40 @@ public partial class SettingsPage : ContentPage
     }
 
     #endregion
+
+    /// <summary>
+    /// Forces the correct thumb colors for switches based on their toggled state.
+    /// Ensures the ON state uses a white thumb even on first load and after theme changes.
+    /// </summary>
+    private void RefreshSwitchThumbColors()
+    {
+        try
+        {
+            // Use dispatcher to ensure UI thread and that handlers are ready
+            Dispatcher.Dispatch(() =>
+            {
+                if (ThemeSwitch != null)
+                {
+                    if (ThemeSwitch.IsToggled)
+                        ThemeSwitch.ThumbColor = Color.FromArgb("#FFFFFF");
+                    else
+                        ThemeSwitch.ClearValue(Switch.ThumbColorProperty);
+                }
+
+                if (SidebarCollapseSwitch != null)
+                {
+                    if (SidebarCollapseSwitch.IsToggled)
+                        SidebarCollapseSwitch.ThumbColor = Color.FromArgb("#FFFFFF");
+                    else
+                        SidebarCollapseSwitch.ClearValue(Switch.ThumbColorProperty);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RefreshSwitchThumbColors error: {ex.Message}");
+        }
+    }
 
     #region Preferences Management
 
@@ -676,7 +837,8 @@ public partial class SettingsPage : ContentPage
             // Ensure keys defined in merged dictionaries (e.g., Colors.xaml) are also updated
             PropagateThemeKeys(resources,
                 "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
-                "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor");
+                "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor",
+                "PrimaryRed", "InteractivePrimaryColor", "InteractiveSecondaryColor", "BorderInteractiveColor");
             // Also set UserAppTheme to ensure consistent visual refresh across controls
             Application.Current.UserAppTheme = isDarkTheme ? AppTheme.Dark : AppTheme.Light;
             Application.Current.MainPage?.ForceLayout();
@@ -700,92 +862,92 @@ public partial class SettingsPage : ContentPage
         if (isDarkTheme)
         {
             // Apply Dark Theme Colors
-            resources["PrimaryRed"] = Color.FromArgb("#CC333B");
+            resources["PrimaryRed"] = Color.FromArgb("#E57373");
             resources["PageBackgroundColor"] = Color.FromArgb("#121212");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#1E1E1E");
             resources["CardBackgroundColor"] = Color.FromArgb("#2A2A2A");
             resources["CardAccentBackgroundColor"] = Color.FromArgb("#333333");
             resources["CardShadowColor"] = Color.FromArgb("#666666");
             resources["ContentBackgroundColor"] = Color.FromArgb("#1A1A1A");
-            resources["TextColor"] = Color.FromArgb("#FFFFFF");
-            resources["TextColorSecondary"] = Color.FromArgb("#B3B3B3");
-            resources["TextColorTertiary"] = Color.FromArgb("#808080");
-            resources["TextColorDisabled"] = Color.FromArgb("#4D4D4D");
+            resources["TextColor"] = Color.FromArgb("#E0E0E0");
+            resources["TextColorSecondary"] = Color.FromArgb("#BDBDBD");
+            resources["TextColorTertiary"] = Color.FromArgb("#757575");
+            resources["TextColorDisabled"] = Color.FromArgb("#616161");
             resources["ButtonBackgroundColor"] = Color.FromArgb("#3A3A3A");
             resources["ButtonTextColor"] = Color.FromArgb("#FFFFFF");
             resources["ButtonBorderColor"] = Color.FromArgb("#555555");
             resources["ButtonHoverBackgroundColor"] = Color.FromArgb("#4A4A4A");
             resources["ButtonPressedBackgroundColor"] = Color.FromArgb("#2A2A2A");
-            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#CC333B");
-            resources["PrimaryButtonTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#B52D35");
-            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#A02730");
-            resources["BorderColorLight"] = Color.FromArgb("#444444");
+            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#90CAF9");
+            resources["PrimaryButtonTextColor"] = Color.FromArgb("#121212");
+            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#81D4FA");
+            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#42A5F5");
+            resources["BorderColorLight"] = Color.FromArgb("#3C3C3C");
             resources["BorderColorMedium"] = Color.FromArgb("#666666");
             resources["BorderColorDark"] = Color.FromArgb("#333333");
             resources["InputBackgroundColor"] = Color.FromArgb("#2A2A2A");
-            resources["InputBorderColor"] = Color.FromArgb("#555555");
-            resources["InputTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["InputPlaceholderColor"] = Color.FromArgb("#808080");
-            resources["InputFocusBorderColor"] = Color.FromArgb("#CC333B");
+            resources["InputBorderColor"] = Color.FromArgb("#3C3C3C");
+            resources["InputTextColor"] = Color.FromArgb("#E0E0E0");
+            resources["InputPlaceholderColor"] = Color.FromArgb("#757575");
+            resources["InputFocusBorderColor"] = Color.FromArgb("#42A5F5");
             resources["SuccessColor"] = Color.FromArgb("#4CAF50");
             resources["WarningColor"] = Color.FromArgb("#FF9800");
             resources["ErrorColor"] = Color.FromArgb("#F44336");
             resources["InfoColor"] = Color.FromArgb("#2196F3");
-            resources["SelectionColor"] = Color.FromArgb("#CC333B");
-            resources["SelectionBackgroundColor"] = Color.FromArgb("#3D1A1D");
-            resources["HighlightColor"] = Color.FromArgb("#4D4D4D");
+            resources["SelectionColor"] = Color.FromArgb("#90CAF9");
+            resources["SelectionBackgroundColor"] = Color.FromArgb("#263238");
+            resources["HighlightColor"] = Color.FromRgba(255,255,255,0.08);
             resources["NavigationBackgroundColor"] = Color.FromArgb("#1E1E1E");
-            resources["NavigationTextColor"] = Color.FromArgb("#FFFFFF");
+            resources["NavigationTextColor"] = Color.FromArgb("#E0E0E0");
             resources["NavigationSelectedBackgroundColor"] = Color.FromArgb("#CC333B");
             resources["NavigationSelectedTextColor"] = Color.FromArgb("#FFFFFF");
             resources["NavigationHoverBackgroundColor"] = Color.FromArgb("#3A3A3A");
             resources["SettingsBackgroundColor"] = Color.FromArgb("#2A2A2A");
-            resources["SettingsBorderColor"] = Color.FromArgb("#444444");
-            resources["SettingsTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["SettingsSecondaryTextColor"] = Color.FromArgb("#B3B3B3");
+            resources["SettingsBorderColor"] = Color.FromArgb("#3C3C3C");
+            resources["SettingsTextColor"] = Color.FromArgb("#E0E0E0");
+            resources["SettingsSecondaryTextColor"] = Color.FromArgb("#BDBDBD");
         }
         else
         {
             // Apply Light Theme Colors
-            resources["PrimaryRed"] = Color.FromArgb("#CC333B");
-            resources["PageBackgroundColor"] = Color.FromArgb("#FFFFFF");
+            resources["PrimaryRed"] = Color.FromArgb("#D32F2F");
+            resources["PageBackgroundColor"] = Color.FromArgb("#F5F5F5");
             resources["SidebarBackgroundColor"] = Color.FromArgb("#F8F9FA");
             resources["CardBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["CardAccentBackgroundColor"] = Color.FromArgb("#F2F2F2");
             resources["CardShadowColor"] = Color.FromArgb("#ACACAC");
             resources["ContentBackgroundColor"] = Color.FromArgb("#FAFAFA");
-            resources["TextColor"] = Color.FromArgb("#212529");
-            resources["TextColorSecondary"] = Color.FromArgb("#6C757D");
-            resources["TextColorTertiary"] = Color.FromArgb("#ADB5BD");
-            resources["TextColorDisabled"] = Color.FromArgb("#CED4DA");
+            resources["TextColor"] = Color.FromArgb("#212121");
+            resources["TextColorSecondary"] = Color.FromArgb("#616161");
+            resources["TextColorTertiary"] = Color.FromArgb("#9E9E9E");
+            resources["TextColorDisabled"] = Color.FromArgb("#BDBDBD");
             resources["ButtonBackgroundColor"] = Color.FromArgb("#F8F9FA");
             resources["ButtonTextColor"] = Color.FromArgb("#212529");
             resources["ButtonBorderColor"] = Color.FromArgb("#DEE2E6");
             resources["ButtonHoverBackgroundColor"] = Color.FromArgb("#E9ECEF");
             resources["ButtonPressedBackgroundColor"] = Color.FromArgb("#DEE2E6");
-            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#CC333B");
+            resources["PrimaryButtonBackgroundColor"] = Color.FromArgb("#1976D2");
             resources["PrimaryButtonTextColor"] = Color.FromArgb("#FFFFFF");
-            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#B52D35");
-            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#A02730");
+            resources["PrimaryButtonHoverBackgroundColor"] = Color.FromArgb("#0288D1");
+            resources["PrimaryButtonPressedBackgroundColor"] = Color.FromArgb("#1565C0");
             resources["BorderColorLight"] = Color.FromArgb("#DEE2E6");
             resources["BorderColorMedium"] = Color.FromArgb("#ADB5BD");
             resources["BorderColorDark"] = Color.FromArgb("#6C757D");
             resources["InputBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["InputBorderColor"] = Color.FromArgb("#CED4DA");
-            resources["InputTextColor"] = Color.FromArgb("#212529");
-            resources["InputPlaceholderColor"] = Color.FromArgb("#6C757D");
-            resources["InputFocusBorderColor"] = Color.FromArgb("#CC333B");
+            resources["InputTextColor"] = Color.FromArgb("#212121");
+            resources["InputPlaceholderColor"] = Color.FromArgb("#9E9E9E");
+            resources["InputFocusBorderColor"] = Color.FromArgb("#2196F3");
             resources["SuccessColor"] = Color.FromArgb("#198754");
             resources["WarningColor"] = Color.FromArgb("#FFC107");
             resources["ErrorColor"] = Color.FromArgb("#DC3545");
             resources["InfoColor"] = Color.FromArgb("#0DCAF0");
-            resources["SelectionColor"] = Color.FromArgb("#CC333B");
-            resources["SelectionBackgroundColor"] = Color.FromArgb("#FFF2F2");
-            resources["HighlightColor"] = Color.FromArgb("#E9ECEF");
+            resources["SelectionColor"] = Color.FromArgb("#1976D2");
+            resources["SelectionBackgroundColor"] = Color.FromArgb("#E8F0FE");
+            resources["HighlightColor"] = Color.FromRgba(0,0,0,0.04);
             resources["NavigationBackgroundColor"] = Color.FromArgb("#F8F9FA");
-            resources["NavigationTextColor"] = Color.FromArgb("#212529");
-            resources["NavigationSelectedBackgroundColor"] = Color.FromArgb("#CC333B");
+            resources["NavigationTextColor"] = Color.FromArgb("#212121");
+            resources["NavigationSelectedBackgroundColor"] = Color.FromArgb("#E8F0FE");
             resources["NavigationSelectedTextColor"] = Color.FromArgb("#FFFFFF");
             resources["NavigationHoverBackgroundColor"] = Color.FromArgb("#E9ECEF");
             resources["SettingsBackgroundColor"] = Color.FromArgb("#FFFFFF");

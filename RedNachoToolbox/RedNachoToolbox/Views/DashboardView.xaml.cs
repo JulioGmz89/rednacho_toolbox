@@ -117,7 +117,7 @@ public partial class DashboardView : ContentView
     /// </summary>
     /// <param name="sender">The sender object</param>
     /// <param name="e">The selection changed event arguments</param>
-    private void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
@@ -127,23 +127,28 @@ public partial class DashboardView : ContentView
                 
                 // Add to recently used tools
                 ViewModel.AddToRecentlyUsed(selectedTool);
-                
+
+                // Publish message to host the tool inside MainPage content area (keep sidebar)
+                try
+                {
+                    MessagingCenter.Send(this, "OpenTool", selectedTool);
+                }
+                catch (Exception msgEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error sending OpenTool message: {msgEx.Message}");
+                }
+
                 // Clear selection to allow reselection
                 if (sender is CollectionView collectionView)
                 {
                     collectionView.SelectedItem = null;
                 }
                 
-                // Provide user feedback and future navigation placeholder
-                DisplayAlert("Tool Selected", $"Opening {selectedTool.Name}...\n\n{selectedTool.Description}", "OK");
-                
-                // TODO: Navigate to the specific tool page
-                // await Shell.Current.GoToAsync($"tool?name={selectedTool.Name}");
+                // Navigation handled by MainPage via MessagingCenter
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in OnToolSelectionChanged: {ex.Message}");
             DisplayAlert("Error", "Failed to open the selected tool. Please try again.", "OK");
         }
     }

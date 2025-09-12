@@ -66,8 +66,8 @@
             <!-- Tool Card DataTemplate -->
             <DataTemplate x:Key="ToolCardTemplate">
                 <Border BackgroundColor="{DynamicResource CardBackgroundColor}"
-                        Stroke="Transparent"
-                        StrokeThickness="0"
+                        Stroke="{DynamicResource BorderColorLight}"
+                        StrokeThickness="1"
                         Padding="12"
                         Margin="0"
                         HeightRequest="120"

@@ -1,5 +1,8 @@
 using RedNachoToolbox.ViewModels;
 using Microsoft.Maui.Controls.Shapes;
+using RedNachoToolbox.Views;
+using RedNachoToolbox.Models;
+using RedNachoToolbox.Tools.MarkdownToPdf;
 
 namespace RedNachoToolbox;
 
@@ -18,8 +21,53 @@ public partial class MainPage : ContentPage
         ViewModel = new MainViewModel();
         BindingContext = ViewModel;
         
+        // Initialize main content with Dashboard
+        MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
+        
+        // Subscribe to tool open messages from views
+        try
+        {
+            MessagingCenter.Subscribe<DashboardView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
+            MessagingCenter.Subscribe<AllToolsView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error subscribing to OpenTool: {ex.Message}");
+        }
+        
         // Subscribe to appearing event to refresh ViewModel state
         this.Appearing += OnPageAppearing;
+    }
+
+    private void ShowTool(ToolInfo tool)
+    {
+        try
+        {
+            // Map known tools to ContentViews (keep sidebar)
+            ContentView? view = null;
+            if (tool.TargetType == typeof(MarkdownToPdfView) || tool.Name.Contains("Markdown", StringComparison.OrdinalIgnoreCase))
+            {
+                view = new MarkdownToPdfView();
+            }
+
+            if (view != null)
+            {
+                // Keep binding to MainViewModel for shared theme state if needed
+                // Tool view manages its own internal ViewModel
+                MainContentHost.Content = view;
+                System.Diagnostics.Debug.WriteLine($"Hosted tool in content area: {tool.Name}");
+            }
+            else
+            {
+                // Fallback: show dashboard if not mapped
+                MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
+                System.Diagnostics.Debug.WriteLine($"No mapping for tool '{tool.Name}', showing Dashboard");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error hosting tool: {ex.Message}");
+        }
     }
 
     private void OnPageAppearing(object? sender, EventArgs e)
@@ -272,8 +320,8 @@ public partial class MainPage : ContentPage
             ViewModel.ClearFilters();
             System.Diagnostics.Debug.WriteLine("Dashboard view activated - filters cleared, set as active page");
             
-            // TODO: Navigate to Dashboard/All Applications view
-            await DisplayAlert("Dashboard", "Dashboard functionality will be implemented here.", "OK");
+            // Swap main content to Dashboard view
+            MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
         }
         catch (Exception ex)
         {
@@ -340,9 +388,8 @@ public partial class MainPage : ContentPage
             // Update active button backgrounds
             UpdateActiveButtonBackgrounds();
             
-            // TODO: Navigate to Documentation view
-            // This will be connected to the ViewModel and navigation service in future iterations
-            await DisplayAlert("Documentation", "Documentation functionality will be implemented here.", "OK");
+            // Swap main content to AllTools view (acts as documentation/catalog)
+            MainContentHost.Content = new AllToolsView { BindingContext = ViewModel };
             
             System.Diagnostics.Debug.WriteLine("Documentation view selected - set as active page");
         }
@@ -395,18 +442,50 @@ public partial class MainPage : ContentPage
             
             // Note: Settings doesn't change active page state since it navigates to separate view
             // The previous active page (Dashboard/Documentation) should remain active when returning
-            
-            // Navigate to SettingsPage
-            var settingsPage = new SettingsPage();
-            await Navigation.PushAsync(settingsPage);
-            
-            System.Diagnostics.Debug.WriteLine("Navigated to Settings page - set as active page");
+
+            // Prefer Shell navigation with registered route; fallback to PushAsync if needed
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("Attempting Shell navigation to SettingsPage route...");
+                await Shell.Current.GoToAsync(nameof(SettingsPage));
+                System.Diagnostics.Debug.WriteLine("Shell navigation to Settings succeeded.");
+            }
+            catch (Exception shellEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Shell navigation failed: {shellEx}");
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine("Falling back to Navigation.PushAsync(new SettingsPage())...");
+                    var settingsPage = new SettingsPage();
+                    await Navigation.PushAsync(settingsPage);
+                    System.Diagnostics.Debug.WriteLine("PushAsync to Settings succeeded.");
+                }
+                catch (Exception pushEx)
+                {
+                    // Throw aggregate so outer catch can show full details
+                    throw new AggregateException("Navigation to Settings failed using both Shell and PushAsync.", shellEx, pushEx);
+                }
+            }
         }
         catch (Exception ex)
         {
             // Handle navigation error gracefully
-            System.Diagnostics.Debug.WriteLine($"Navigation error: {ex.Message}");
-            await DisplayAlert("Navigation Error", "Unable to open Settings page. Please try again.", "OK");
+            System.Diagnostics.Debug.WriteLine($"Navigation error: {ex}");
+            var errorDetails = $"{ex.GetType().Name}: {ex.Message}";
+            if (ex is AggregateException agg && agg.InnerExceptions?.Count > 0)
+            {
+                int idx = 1;
+                foreach (var ie in agg.InnerExceptions)
+                {
+                    errorDetails += $"\nInner[{idx}]: {ie.GetType().Name}: {ie.Message}";
+                    idx++;
+                }
+            }
+            else if (ex.InnerException != null)
+            {
+                errorDetails += $"\nInner: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+            }
+            await DisplayAlert("Navigation Error", $"Unable to open Settings page.\n\n{errorDetails}", "OK");
         }
     }
 

@@ -35,7 +35,7 @@
                        BackgroundColor="{DynamicResource InputBackgroundColor}"
                        TextColor="{DynamicResource InputTextColor}"
                        PlaceholderColor="{DynamicResource InputPlaceholderColor}"
-                       CancelButtonColor="{DynamicResource PrimaryRed}"
+                       CancelButtonColor="{DynamicResource InteractivePrimaryColor}"
                        VerticalOptions="Center"
                        SearchButtonPressed="OnSearchButtonPressed"
                        TextChanged="OnSearchTextChanged" />
@@ -97,7 +97,7 @@
                 <CollectionView.Header>
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"
-                                       Color="{DynamicResource PrimaryRed}"
+                                       Color="{DynamicResource InteractivePrimaryColor}"
                                        VerticalOptions="Center"
                                        HorizontalOptions="Center"
                                        Margin="0,20"/>
@@ -110,7 +110,7 @@
                 Text="+"
                 FontSize="24"
                 FontAttributes="Bold"
-                BackgroundColor="{DynamicResource PrimaryRed}"
+                BackgroundColor="{DynamicResource InteractivePrimaryColor}"
                 TextColor="White"
                 CornerRadius="28"
                 WidthRequest="56"

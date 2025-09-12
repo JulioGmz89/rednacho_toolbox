@@ -14,7 +14,7 @@
                                  IsVisible="{Binding HasRecentlyUsedTools}">
                 <Label Text="Recently Used"
                        FontSize="24"
-                       Style="{StaticResource SubHeaderStyle}"
+                       Style="{StaticResource HeaderStyle}"
                        HorizontalOptions="Start"/>
                 <CollectionView x:Name="RecentToolsCollectionView"
                                 ItemsSource="{Binding RecentlyUsedTools}"
@@ -44,7 +44,7 @@
             <VerticalStackLayout Spacing="6">
                 <Label Text="All Applications"
                        FontSize="24"
-                       Style="{StaticResource SubHeaderStyle}"
+                       Style="{StaticResource HeaderStyle}"
                        HorizontalOptions="Start"/>
                 <Label Text="{Binding FilteredToolsCount, StringFormat='Showing {0} tools'}"
                        FontSize="14"
@@ -61,7 +61,7 @@
                            BackgroundColor="{DynamicResource InputBackgroundColor}"
                            TextColor="{DynamicResource InputTextColor}"
                            PlaceholderColor="{DynamicResource InputPlaceholderColor}"
-                           CancelButtonColor="{DynamicResource PrimaryRed}"
+                           CancelButtonColor="{DynamicResource InteractivePrimaryColor}"
                            VerticalOptions="Center"
                            SearchButtonPressed="OnSearchButtonPressed"
                            TextChanged="OnSearchTextChanged" />
@@ -119,7 +119,7 @@
             <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
-                               Color="{DynamicResource PrimaryRed}"
+                               Color="{DynamicResource InteractivePrimaryColor}"
                                VerticalOptions="Center"
                                HorizontalOptions="Center"/>
                                

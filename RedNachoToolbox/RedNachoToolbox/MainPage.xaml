@@ -83,7 +83,7 @@
                                 <Ellipse x:Name="DashboardIndicatorDotCollapsed"
                                          WidthRequest="8"
                                          HeightRequest="8"
-                                         Fill="#CC333B"
+                                         Fill="{DynamicResource PrimaryRed}"
                                          VerticalOptions="Start"
                                          HorizontalOptions="Start"
                                          Margin="4,4,0,0"
@@ -124,7 +124,7 @@
                                 <Ellipse x:Name="DocumentationIndicatorDotCollapsed"
                                          WidthRequest="8"
                                          HeightRequest="8"
-                                         Fill="#CC333B"
+                                         Fill="{DynamicResource PrimaryRed}"
                                          VerticalOptions="Start"
                                          HorizontalOptions="Start"
                                          Margin="4,4,0,0"
@@ -139,6 +139,7 @@
                                    BackgroundColor="{DynamicResource InputBackgroundColor}"
                                    TextColor="{DynamicResource InputTextColor}"
                                    PlaceholderColor="{DynamicResource InputPlaceholderColor}"
+                                   CancelButtonColor="{DynamicResource InteractivePrimaryColor}"
                                    SearchButtonPressed="OnSearchButtonPressed"
                                    TextChanged="OnSearchTextChanged"
                                    Margin="0,0,0,16"
@@ -160,7 +161,7 @@
                                             Grid.Column="0"
                                             WidthRequest="4"
                                             HeightRequest="20"
-                                            BackgroundColor="#CC333B"
+                                            BackgroundColor="{DynamicResource PrimaryRed}"
                                             VerticalOptions="Center"
                                             HorizontalOptions="Center"
                                             StrokeThickness="0"
@@ -208,7 +209,7 @@
                                             Grid.Column="0"
                                             WidthRequest="4"
                                             HeightRequest="20"
-                                            BackgroundColor="#CC333B"
+                                            BackgroundColor="{DynamicResource PrimaryRed}"
                                             VerticalOptions="Center"
                                             HorizontalOptions="Center"
                                             StrokeThickness="0"
@@ -262,7 +263,7 @@
                                 <Ellipse Grid.Column="0"
                                          WidthRequest="4"
                                          HeightRequest="4"
-                                         Fill="#CC333B"
+                                         Fill="{DynamicResource PrimaryRed}"
                                          VerticalOptions="Center"
                                          HorizontalOptions="Center"
                                          IsVisible="{Binding IsSettingsActive}" />
@@ -321,7 +322,7 @@
                         <!-- Active Page Indicator - Collapsed -->
                         <Ellipse WidthRequest="6"
                                  HeightRequest="6"
-                                 Fill="#CC333B"
+                                 Fill="{DynamicResource PrimaryRed}"
                                  VerticalOptions="Start"
                                  HorizontalOptions="Start"
                                  Margin="2,2,0,0"
@@ -335,8 +336,8 @@
         <Border Grid.Column="1"
                 BackgroundColor="{DynamicResource PageBackgroundColor}"
                 StrokeThickness="0">
-            <!-- Dashboard View -->
-            <views:DashboardView BindingContext="{Binding}" />
+            <!-- Content host swaps Dashboard and Tool ContentViews while keeping sidebar -->
+            <ContentView x:Name="MainContentHost" />
         </Border>
     </Grid>
 

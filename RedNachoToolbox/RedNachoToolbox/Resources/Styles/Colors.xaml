@@ -44,24 +44,32 @@
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
 
     <!-- Default light theme semantic colors (overridden at runtime by SettingsPage) -->
-    <Color x:Key="PrimaryRed">#CC333B</Color>
-    <Color x:Key="PageBackgroundColor">#FFFFFF</Color>
-    <Color x:Key="SidebarBackgroundColor">#F8F9FA</Color>
+    <Color x:Key="PrimaryRed">#D32F2F</Color>
+    <!-- Surfaces per MejoraDiseñoUI: Light - surface-primary #F5F5F5, surface-secondary #FFFFFF, surface-tertiary #FFFFFF -->
+    <Color x:Key="PageBackgroundColor">#F5F5F5</Color>
+    <Color x:Key="SidebarBackgroundColor">#FFFFFF</Color>
     <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
     <Color x:Key="CardAccentBackgroundColor">#F2F2F2</Color>
     <Color x:Key="CardShadowColor">#ACACAC</Color>
     <Color x:Key="ContentBackgroundColor">#FAFAFA</Color>
 
-    <Color x:Key="TextColor">#212529</Color>
-    <Color x:Key="TextColorSecondary">#6C757D</Color>
-    <Color x:Key="TextColorTertiary">#ADB5BD</Color>
-    <Color x:Key="TextColorDisabled">#CED4DA</Color>
+    <!-- Typography per MejoraDiseñoUI: primary #212121, secondary #616161, tertiary/placeholder #9E9E9E, disabled #BDBDBD -->
+    <Color x:Key="TextColor">#212121</Color>
+    <Color x:Key="TextColorSecondary">#616161</Color>
+    <Color x:Key="TextColorTertiary">#9E9E9E</Color>
+    <Color x:Key="TextColorDisabled">#BDBDBD</Color>
 
     <Color x:Key="ButtonBackgroundColor">#F8F9FA</Color>
     <Color x:Key="ButtonTextColor">#212529</Color>
     <Color x:Key="ButtonBorderColor">#DEE2E6</Color>
     <Color x:Key="ButtonHoverBackgroundColor">#E9ECEF</Color>
     <Color x:Key="ButtonPressedBackgroundColor">#DEE2E6</Color>
+
+    <!-- Primary (prominent) button colors - interactive blue in light theme -->
+    <Color x:Key="PrimaryButtonBackgroundColor">#1976D2</Color>
+    <Color x:Key="PrimaryButtonTextColor">#FFFFFF</Color>
+    <Color x:Key="PrimaryButtonHoverBackgroundColor">#0288D1</Color>
+    <Color x:Key="PrimaryButtonPressedBackgroundColor">#1565C0</Color>
 
     <Color x:Key="BorderColorLight">#DEE2E6</Color>
     <Color x:Key="BorderColorMedium">#ADB5BD</Color>
@@ -70,21 +78,23 @@
     <Color x:Key="InputBackgroundColor">#FFFFFF</Color>
     <Color x:Key="InputBorderColor">#CED4DA</Color>
     <Color x:Key="InputTextColor">#212529</Color>
-    <Color x:Key="InputPlaceholderColor">#6C757D</Color>
-    <Color x:Key="InputFocusBorderColor">#CC333B</Color>
+    <Color x:Key="InputPlaceholderColor">#9E9E9E</Color>
+    <!-- Interactive focus border moves to blue per MejoraDiseñoUI -->
+    <Color x:Key="InputFocusBorderColor">#2196F3</Color>
 
     <Color x:Key="SuccessColor">#198754</Color>
     <Color x:Key="WarningColor">#FFC107</Color>
-    <Color x:Key="ErrorColor">#DC3545</Color>
+    <Color x:Key="ErrorColor">#D32F2F</Color>
     <Color x:Key="InfoColor">#0DCAF0</Color>
 
-    <Color x:Key="SelectionColor">#CC333B</Color>
-    <Color x:Key="SelectionBackgroundColor">#FFF2F2</Color>
-    <Color x:Key="HighlightColor">#E9ECEF</Color>
+    <Color x:Key="SelectionColor">#1976D2</Color>
+    <Color x:Key="SelectionBackgroundColor">#E8F0FE</Color>
+    <!-- Hover overlay approximation (4% black over white) -->
+    <Color x:Key="HighlightColor">#0A000000</Color>
 
     <Color x:Key="NavigationBackgroundColor">#F8F9FA</Color>
     <Color x:Key="NavigationTextColor">#212529</Color>
-    <Color x:Key="NavigationSelectedBackgroundColor">#CC333B</Color>
+    <Color x:Key="NavigationSelectedBackgroundColor">#E8F0FE</Color>
     <Color x:Key="NavigationSelectedTextColor">#FFFFFF</Color>
     <Color x:Key="NavigationHoverBackgroundColor">#E9ECEF</Color>
 
@@ -92,5 +102,24 @@
     <Color x:Key="SettingsBorderColor">#DEE2E6</Color>
     <Color x:Key="SettingsTextColor">#212529</Color>
     <Color x:Key="SettingsSecondaryTextColor">#6C757D</Color>
+
+    <!-- Semantic color tokens (PascalCase aliases of MejoraDiseñoUI tokens) -->
+    <!-- color-brand-primary -->
+    <Color x:Key="BrandPrimaryColor">#D32F2F</Color>
+    <!-- color-interactive-primary / color-interactive-secondary -->
+    <Color x:Key="InteractivePrimaryColor">#1976D2</Color>
+    <Color x:Key="InteractiveSecondaryColor">#0288D1</Color>
+    <!-- color-border-interactive -->
+    <Color x:Key="BorderInteractiveColor">#2196F3</Color>
+    <!-- color-text-interactive -->
+    <Color x:Key="TextInteractiveColor">#FFFFFF</Color>
+    <!-- color-icon-primary / color-icon-interactive -->
+    <Color x:Key="IconPrimaryColor">#616161</Color>
+    <Color x:Key="IconInteractiveColor">#1976D2</Color>
+    <!-- color-status-error -->
+    <Color x:Key="StatusErrorColor">#D32F2F</Color>
+    <!-- color-state-hover-overlay / color-state-disabled-bg -->
+    <Color x:Key="HoverOverlayColor">#0A000000</Color>
+    <Color x:Key="DisabledBackgroundColor">#E0E0E0</Color>
 
 </ResourceDictionary>

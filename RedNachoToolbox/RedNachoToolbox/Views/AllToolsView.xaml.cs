@@ -74,17 +74,25 @@ public partial class AllToolsView : ContentView
     /// </summary>
     /// <param name="sender">The CollectionView that triggered the event</param>
     /// <param name="e">Selection changed event arguments</param>
-    private void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
             if (e.CurrentSelection?.FirstOrDefault() is ToolInfo selectedTool)
             {
                 System.Diagnostics.Debug.WriteLine($"Tool selected: {selectedTool.Name}");
-                
-                // TODO: Implement navigation to the selected tool
-                // For now, just show an alert
-                DisplayAlert("Tool Selected", $"You selected: {selectedTool.Name}\n\nNavigation to tools will be implemented in the next iteration.", "OK");
+                // Add to recently used tools if ViewModel is available
+                ViewModel?.AddToRecentlyUsed(selectedTool);
+
+                // Publish message so MainPage hosts the tool within the content area (keeping sidebar)
+                try
+                {
+                    MessagingCenter.Send(this, "OpenTool", selectedTool);
+                }
+                catch (Exception msgEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error sending OpenTool message: {msgEx.Message}");
+                }
                 
                 // Clear selection to allow selecting the same item again
                 if (sender is CollectionView collectionView)

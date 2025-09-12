@@ -1,4 +1,10 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Handlers;
+using SkiaSharp.Views.Maui.Controls.Hosting;
+using CommunityToolkit.Maui;
+#if WINDOWS
+using Microsoft.UI.Xaml.Controls;
+#endif
 
 namespace RedNachoToolbox;
 
@@ -9,6 +15,8 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .UseSkiaSharp()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -36,6 +44,18 @@ public static class MauiProgram
                 fonts.AddFont("Inter/Inter_18pt-ExtraLightItalic.ttf", "InterExtraLightItalic");
                 fonts.AddFont("Inter/Inter_18pt-ThinItalic.ttf", "InterThinItalic");
             });
+
+        // Hide native On/Off text beside Switch on Windows (ToggleSwitch OnContent/OffContent)
+        SwitchHandler.Mapper.AppendToMapping("HideWinSwitchLabels", (handler, view) =>
+        {
+#if WINDOWS
+            if (handler?.PlatformView is ToggleSwitch ts)
+            {
+                ts.OnContent = string.Empty;
+                ts.OffContent = string.Empty;
+            }
+#endif
+        });
 
 #if DEBUG
         builder.Logging.AddDebug();
