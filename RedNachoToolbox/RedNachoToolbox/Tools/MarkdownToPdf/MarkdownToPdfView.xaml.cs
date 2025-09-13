@@ -71,6 +71,22 @@ public partial class MarkdownToPdfView : ContentView
     {
         try
         {
+            void RestorePreview()
+            {
+                try
+                {
+                    if (PreviewWebView != null)
+                    {
+                        var previewHtml = ViewModel.HtmlPreview;
+                        PreviewWebView.Source = new HtmlWebViewSource { Html = previewHtml };
+                    }
+                }
+                catch (Exception rx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"RestorePreview error: {rx.Message}");
+                }
+            }
+
             // 1) En Windows intentamos imprimir con WebView2 para que el PDF sea idéntico a la vista previa
             bool printedWithWebView2 = false;
 #if WINDOWS
@@ -111,6 +127,8 @@ public partial class MarkdownToPdfView : ContentView
                         catch { /* noop */ }
                     }
                     printedWithWebView2 = true;
+                    // Restaurar la vista previa (evita que se quede el HTML de exportación sin márgenes visuales)
+                    RestorePreview();
                 }
             }
             catch (Exception wv2ex)
@@ -137,6 +155,8 @@ public partial class MarkdownToPdfView : ContentView
                 if (!saveResult.IsSuccessful)
                 {
                     await Application.Current!.MainPage!.DisplayAlert("Error", saveResult.Exception?.Message ?? "No se pudo guardar el archivo.", "OK");
+                    // Aunque falle el guardado, restaurar la vista previa por si cambió
+                    RestorePreview();
                     return;
                 }
 
@@ -151,6 +171,9 @@ public partial class MarkdownToPdfView : ContentView
                 {
                     System.Diagnostics.Debug.WriteLine($"No se pudo abrir el PDF: {openEx.Message}");
                 }
+
+                // Asegurar que la vista previa regrese a su HTML con márgenes visuales
+                RestorePreview();
             }
         }
         catch (Exception ex)

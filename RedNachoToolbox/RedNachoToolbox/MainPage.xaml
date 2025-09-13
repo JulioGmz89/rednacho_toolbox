@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:RedNachoToolbox.Views"
              xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
+             xmlns:models="clr-namespace:RedNachoToolbox.Models"
              x:Class="RedNachoToolbox.MainPage"
+             x:Name="MainPageRoot"
              x:DataType="viewmodels:MainViewModel">
 
     <ContentPage.Resources>
@@ -90,50 +92,48 @@
                                          IsVisible="{Binding IsDashboardActive}" />
                             </Grid>
                             
-                            <!-- Divider between Dashboard and Documentation -->
+                            <!-- Divider between Dashboard and Productivity -->
                             <BoxView HeightRequest="1"
                                      BackgroundColor="{DynamicResource BorderColorLight}"
                                      Margin="8,4,8,4" />
                             
-                            <!-- Documentation Button - Collapsed -->
+                            <!-- Productivity Button - Collapsed -->
                             <Grid HeightRequest="40" WidthRequest="40" HorizontalOptions="Center">
-                                <Frame x:Name="DocumentationButtonFrameCollapsed" 
+                                <Frame x:Name="ProductivityButtonFrameCollapsed" 
                                        Style="{StaticResource InteractiveButtonFrame}" 
                                        HeightRequest="40" 
                                        WidthRequest="40" 
                                        CornerRadius="8">
                                     <Frame.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnDocumentationClicked" />
-                                        <PointerGestureRecognizer PointerEntered="OnDocumentationPointerEntered" 
-                                                                PointerExited="OnDocumentationPointerExited" />
+                                        <TapGestureRecognizer Tapped="OnProductivityClicked" />
+                                        <PointerGestureRecognizer PointerEntered="OnProductivityPointerEntered" 
+                                                                PointerExited="OnProductivityPointerExited" />
                                     </Frame.GestureRecognizers>
                                     <Image WidthRequest="18"
                                            HeightRequest="18"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center">
                                         <Image.Source>
-                                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
-                                                <Binding Path="DocumentationIconBase" />
-                                                <Binding Path="IsDarkTheme" />
-                                            </MultiBinding>
+                                            <AppThemeBinding Light="rocket_light.png" Dark="rocket_dark.png" />
                                         </Image.Source>
                                     </Image>
                                 </Frame>
                                 
                                 <!-- Active Page Indicator - Collapsed Dot -->
-                                <Ellipse x:Name="DocumentationIndicatorDotCollapsed"
+                                <Ellipse x:Name="ProductivityIndicatorDotCollapsed"
                                          WidthRequest="8"
                                          HeightRequest="8"
                                          Fill="{DynamicResource PrimaryRed}"
                                          VerticalOptions="Start"
                                          HorizontalOptions="Start"
                                          Margin="4,4,0,0"
-                                         IsVisible="{Binding IsDocumentationActive}" />
+                                         IsVisible="{Binding IsProductivityActive}" />
                             </Grid>
                             
                         </VerticalStackLayout>
                         
-                        <!-- Search Bar (Hidden when collapsed) -->
+                        <!-- Search Bar (temporarily disabled) -->
+                        <!--
                         <SearchBar x:Name="ToolSearchBar"
                                    Placeholder="Search tools..."
                                    BackgroundColor="{DynamicResource InputBackgroundColor}"
@@ -144,6 +144,7 @@
                                    TextChanged="OnSearchTextChanged"
                                    Margin="0,0,0,16"
                                    IsVisible="{Binding IsSidebarCollapsed, Converter={StaticResource InvertedBoolConverter}}" />
+                        -->
                         
                         <!-- Navigation Section (Hidden when collapsed) -->
                         <VerticalStackLayout Spacing="8" IsVisible="{Binding IsSidebarCollapsed, Converter={StaticResource InvertedBoolConverter}}">
@@ -196,16 +197,16 @@
                                      BackgroundColor="{DynamicResource BorderColorLight}"
                                      Margin="8,8,8,8" />
                             
-                            <!-- Documentation Button -->
-                            <Frame x:Name="DocumentationButtonFrame" Style="{StaticResource InteractiveButtonFrame}">
+                            <!-- Productivity Button -->
+                            <Frame x:Name="ProductivityButtonFrame" Style="{StaticResource InteractiveButtonFrame}" HeightRequest="56">
                                 <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnDocumentationClicked" />
-                                    <PointerGestureRecognizer PointerEntered="OnDocumentationPointerEntered" 
-                                                            PointerExited="OnDocumentationPointerExited" />
+                                    <TapGestureRecognizer Tapped="OnProductivityClicked" />
+                                    <PointerGestureRecognizer PointerEntered="OnProductivityPointerEntered" 
+                                                            PointerExited="OnProductivityPointerExited" />
                                 </Frame.GestureRecognizers>
-                                <Grid ColumnDefinitions="4, 28, *" ColumnSpacing="8" Padding="8,8">
+                                <Grid ColumnDefinitions="4, 28, *, 48" ColumnSpacing="8" Padding="10,10">
                                     <!-- Active Page Indicator - Capsule Shape -->
-                                    <Border x:Name="DocumentationIndicatorCapsule"
+                                    <Border x:Name="ProductivityIndicatorCapsule"
                                             Grid.Column="0"
                                             WidthRequest="4"
                                             HeightRequest="20"
@@ -213,7 +214,7 @@
                                             VerticalOptions="Center"
                                             HorizontalOptions="Center"
                                             StrokeThickness="0"
-                                            IsVisible="{Binding IsDocumentationActive}">
+                                            IsVisible="{Binding IsProductivityActive}">
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="2" />
                                         </Border.StrokeShape>
@@ -224,20 +225,99 @@
                                            HeightRequest="20"
                                            VerticalOptions="Center">
                                         <Image.Source>
-                                            <MultiBinding Converter="{StaticResource ThemeIconConverter}">
-                                                <Binding Path="DocumentationIconBase" />
-                                                <Binding Path="IsDarkTheme" />
-                                            </MultiBinding>
+                                            <AppThemeBinding Light="rocket_light.png" Dark="rocket_dark.png" />
                                         </Image.Source>
                                     </Image>
                                     <Label Grid.Column="2"
-                                           Text="Documentation"
+                                           Text="Productivity"
                                            TextColor="{DynamicResource TextColor}"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Start"
                                            FontSize="14" />
+                                    
+                                    <!-- Chevron for expanding/collapsing the Productivity list -->
+                                    <Grid x:Name="ProductivityChevronHitArea"
+                                          Grid.Column="3"
+                                          VerticalOptions="Center"
+                                          HorizontalOptions="Fill">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnProductivityChevronTapped" />
+                                        </Grid.GestureRecognizers>
+                                        <Image x:Name="ProductivityChevronImage"
+                                               WidthRequest="12"
+                                               HeightRequest="12"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="End">
+                                            <Image.Source>
+                                                <AppThemeBinding Light="chevron_light.png" Dark="chevron_dark.png" />
+                                            </Image.Source>
+                                        </Image>
+                                    </Grid>
                                 </Grid>
                             </Frame>
+
+                            <!-- Expanded list of Productivity tools (indented) -->
+                            <VerticalStackLayout x:Name="ProductivityListContainer"
+                                                 Margin="36,0,0,0"
+                                                 Spacing="4"
+                                                 IsVisible="{Binding IsProductivityExpanded}">
+                                <VerticalStackLayout.BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:ToolInfo">
+                                        <Frame Style="{StaticResource InteractiveButtonFrame}" HeightRequest="48">
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnProductivitySidebarToolTapped" />
+                                                <PointerGestureRecognizer PointerEntered="OnProductivitySidebarToolPointerEntered"
+                                                                        PointerExited="OnProductivitySidebarToolPointerExited" />
+                                            </Frame.GestureRecognizers>
+                                            <Grid ColumnDefinitions="4, 28, *" ColumnSpacing="8" Padding="8,8">
+                                                <!-- Active Page Indicator - Capsule Shape for tool item -->
+                                                <Border x:Name="ToolIndicatorCapsule"
+                                                        Grid.Column="0"
+                                                        WidthRequest="4"
+                                                        HeightRequest="20"
+                                                        BackgroundColor="{DynamicResource PrimaryRed}"
+                                                        VerticalOptions="Center"
+                                                        HorizontalOptions="Center"
+                                                        StrokeThickness="0"
+                                                        IsVisible="{Binding IsActive}">
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="2" />
+                                                    </Border.StrokeShape>
+                                                </Border>
+
+                                                <Image Grid.Column="1"
+                                                       WidthRequest="20"
+                                                       HeightRequest="20"
+                                                       VerticalOptions="Center">
+                                                    <Image.Source>
+                                                        <MultiBinding Converter="{StaticResource ThemeIconConverter}">
+                                                            <Binding Path="IconPath" />
+                                                            <Binding Path="BindingContext.IsDarkTheme" Source="{x:Reference MainPageRoot}" />
+                                                        </MultiBinding>
+                                                    </Image.Source>
+                                                    <!-- Special-case: Markdown to PDF uses dedicated sidebar icons per theme -->
+                                                    <Image.Triggers>
+                                                        <DataTrigger TargetType="Image"
+                                                                     Binding="{Binding Name}"
+                                                                     Value="Markdown to PDF">
+                                                            <Setter Property="Source"
+                                                                    Value="{AppThemeBinding Light=md_to_pdf_lightmode_black.png, Dark=md_to_pdf_darkmode_white.png}" />
+                                                        </DataTrigger>
+                                                    </Image.Triggers>
+                                                </Image>
+                                                <Label Grid.Column="2"
+                                                       VerticalOptions="Center"
+                                                       TextColor="{DynamicResource TextColor}"
+                                                       FontSize="14"
+                                                       Text="{Binding Name}" />
+                                            </Grid>
+                                        </Frame>
+                                    </DataTemplate>
+                                </VerticalStackLayout.BindableLayout.ItemTemplate>
+                                <VerticalStackLayout.BindableLayout.ItemsSource>
+                                    <Binding Path="ProductivityTools" />
+                                </VerticalStackLayout.BindableLayout.ItemsSource>
+                            </VerticalStackLayout>
                             
                         </VerticalStackLayout>
                     </VerticalStackLayout>

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 
 namespace RedNachoToolbox.Converters;
 
@@ -13,15 +14,35 @@ public class ThemeIconConverter : IMultiValueConverter
         try
         {
             if (values?.Length >= 2 && 
-                values[0] is string baseIconName && 
+                values[0] is string baseOrPath && 
                 values[1] is bool isDarkTheme &&
-                !string.IsNullOrEmpty(baseIconName))
+                !string.IsNullOrEmpty(baseOrPath))
             {
-                // For PNG files, append theme suffix and include .png extension
-                // Dark theme uses white icons, light theme uses black icons
-                string iconName = isDarkTheme ? $"{baseIconName}_white.png" : $"{baseIconName}_black.png";
-                
-                System.Diagnostics.Debug.WriteLine($"ThemeIconConverter: baseIconName='{baseIconName}', isDarkTheme={isDarkTheme}, result='{iconName}'");
+                // Determine if input is a full PNG path (contains extension) or a base name
+                bool hasPngExtension = baseOrPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+                if (hasPngExtension)
+                {
+                    // If it's a PNG path, check for _black/_white suffix to theme-switch
+                    var fileNameNoExt = Path.GetFileNameWithoutExtension(baseOrPath);
+                    if (fileNameNoExt.EndsWith("_black", StringComparison.OrdinalIgnoreCase) ||
+                        fileNameNoExt.EndsWith("_white", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Remove suffix and apply themed suffix
+                        var baseName = fileNameNoExt
+                            .Replace("_black", string.Empty, StringComparison.OrdinalIgnoreCase)
+                            .Replace("_white", string.Empty, StringComparison.OrdinalIgnoreCase);
+                        string themed = isDarkTheme ? $"{baseName}_white.png" : $"{baseName}_black.png";
+                        System.Diagnostics.Debug.WriteLine($"ThemeIconConverter: from path '{baseOrPath}' themed -> '{themed}'");
+                        return themed;
+                    }
+                    // No theme suffix present; return original path unchanged
+                    System.Diagnostics.Debug.WriteLine($"ThemeIconConverter: using original PNG path '{baseOrPath}' (no theme suffix to swap)");
+                    return baseOrPath;
+                }
+
+                // Treat as base icon name; append theme suffix and .png
+                string iconName = isDarkTheme ? $"{baseOrPath}_white.png" : $"{baseOrPath}_black.png";
+                System.Diagnostics.Debug.WriteLine($"ThemeIconConverter: baseIconName='{baseOrPath}', isDarkTheme={isDarkTheme}, result='{iconName}'");
                 return iconName;
             }
             

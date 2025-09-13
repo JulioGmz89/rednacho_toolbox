@@ -50,11 +50,7 @@ public partial class DashboardView : ContentView
                 // The search is automatically handled by the SearchText binding in MainViewModel
                 // Additional search logic can be added here if needed
                 
-                // Provide user feedback
-                if (!string.IsNullOrWhiteSpace(searchBar.Text))
-                {
-                    DisplayAlert("Search", $"Searching for: {searchBar.Text}", "OK");
-                }
+                // Removed debug popup feedback for search to avoid intrusive alerts
             }
         }
         catch (Exception ex)
@@ -101,14 +97,13 @@ public partial class DashboardView : ContentView
                 
                 ViewModel.ClearFilters();
                 
-                // Provide user feedback
-                DisplayAlert("Filters Cleared", "All search filters have been cleared.", "OK");
+                // Removed debug popup feedback for clearing filters
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error in OnClearFiltersClicked: {ex.Message}");
-            DisplayAlert("Error", "Failed to clear filters. Please try again.", "OK");
+            // Removed error popup; keeping only debug log
         }
     }
 
@@ -149,7 +144,7 @@ public partial class DashboardView : ContentView
         }
         catch (Exception ex)
         {
-            DisplayAlert("Error", "Failed to open the selected tool. Please try again.", "OK");
+            // Removed error popup; keeping only debug log
         }
     }
 
@@ -175,8 +170,7 @@ public partial class DashboardView : ContentView
                     collectionView.SelectedItem = null;
                 }
                 
-                // Provide user feedback and future navigation placeholder
-                DisplayAlert("Recent Tool Selected", $"Opening {selectedTool.Name}...\n\n{selectedTool.Description}", "OK");
+                // Removed debug popup for recent tool selection
                 
                 // TODO: Navigate to the specific tool page
                 // await Shell.Current.GoToAsync($"tool?name={selectedTool.Name}");
@@ -185,7 +179,7 @@ public partial class DashboardView : ContentView
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error in OnRecentToolSelectionChanged: {ex.Message}");
-            DisplayAlert("Error", "Failed to open the selected recent tool. Please try again.", "OK");
+            // Removed error popup; logging only
         }
     }
 
@@ -200,8 +194,7 @@ public partial class DashboardView : ContentView
         {
             System.Diagnostics.Debug.WriteLine("Add tool button clicked");
             
-            // Future feature: Open add tool dialog or page
-            DisplayAlert("Add Tool", "This feature will be available in a future update.", "OK");
+            // Future feature: Open add tool dialog or page (popup removed)
             
             // TODO: Implement add tool functionality
             // await Shell.Current.GoToAsync("addtool");
@@ -212,26 +205,7 @@ public partial class DashboardView : ContentView
         }
     }
 
-    /// <summary>
-    /// Helper method to display alerts safely.
-    /// </summary>
-    /// <param name="title">The alert title</param>
-    /// <param name="message">The alert message</param>
-    /// <param name="cancel">The cancel button text</param>
-    private async void DisplayAlert(string title, string message, string cancel)
-    {
-        try
-        {
-            if (Application.Current?.MainPage != null)
-            {
-                await Application.Current.MainPage.DisplayAlert(title, message, cancel);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error displaying alert: {ex.Message}");
-        }
-    }
+    // Removed DisplayAlert helper; debug popups are not used in release
 
     /// <summary>
     /// Force-refreshes the ItemTemplate of the collection views so any DynamicResource

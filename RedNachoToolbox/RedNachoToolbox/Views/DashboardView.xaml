@@ -15,6 +15,7 @@
                 <Label Text="Recently Used"
                        FontSize="24"
                        Style="{StaticResource HeaderStyle}"
+                       FontAttributes="Bold"
                        HorizontalOptions="Start"/>
                 <CollectionView x:Name="RecentToolsCollectionView"
                                 ItemsSource="{Binding RecentlyUsedTools}"
@@ -45,6 +46,7 @@
                 <Label Text="All Applications"
                        FontSize="24"
                        Style="{StaticResource HeaderStyle}"
+                       FontAttributes="Bold"
                        HorizontalOptions="Start"/>
                 <Label Text="{Binding FilteredToolsCount, StringFormat='Showing {0} tools'}"
                        FontSize="14"

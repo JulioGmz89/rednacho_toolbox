@@ -154,7 +154,7 @@ public class MarkdownToPdfViewModel : BaseViewModel
     }
 
     // Title shown in right pane header
-    public string RightPaneTitle => IsEditorMode ? "Editor Markdown" : "Vista previa";
+    public string RightPaneTitle => IsEditorMode ? "Markdown Editor" : "Preview";
 
     // Line numbers shown alongside the editor
     private string _lineNumbersText = "1";
@@ -166,9 +166,10 @@ public class MarkdownToPdfViewModel : BaseViewModel
 
     public MarkdownToPdfViewModel()
     {
-        Title = "Markdown → PDF";
-        RebuildPreviewHtml();
-        UpdateLineNumbersFromMarkdown();
+        Title = "Markdown to PDF";
+        // Prefill the editor with the same content as the placeholder sample
+        // so users see a ready-to-edit example immediately.
+        MarkdownText = _sampleMarkdown;
     }
 
     public void RebuildPreviewHtml()

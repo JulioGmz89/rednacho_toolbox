@@ -9,6 +9,8 @@ public partial class SettingsPage : ContentPage
     private bool _isDarkTheme;
     private bool _isSidebarCollapsed;
     private string _closeButtonState = "idle";
+    private bool _themeChangeSubscribed = false;
+    private string _themeMode = "System"; // System | Light | Dark
 
     public SettingsPage()
     {
@@ -16,24 +18,88 @@ public partial class SettingsPage : ContentPage
         InitializeThemeState();
         InitializeSidebarState();
 
-        // Ensure thumb colors refresh once handlers are created
+        // Ensure thumb colors refresh once handlers are created (sidebar)
+        try { SidebarCollapseSwitch.Loaded += (s, e) => RefreshSwitchThumbColors(); } catch { }
+    }
+
+    /// <summary>
+    /// Applies theme based on selected mode (System/Light/Dark). When System is selected,
+    /// we follow the OS theme and listen for changes.
+    /// </summary>
+    private void ApplyThemeMode(string mode)
+    {
         try
         {
-            ThemeSwitch.Loaded += (s, e) => RefreshSwitchThumbColors();
-            SidebarCollapseSwitch.Loaded += (s, e) => RefreshSwitchThumbColors();
+            System.Diagnostics.Debug.WriteLine($"=== ApplyThemeMode: {mode} ===");
+            if (Application.Current == null) return;
+
+            // Remove listener if switching out of System
+            if (_themeChangeSubscribed && mode != "System")
+            {
+                try { Application.Current.RequestedThemeChanged -= OnRequestedThemeChanged; } catch { }
+                _themeChangeSubscribed = false;
+            }
+
+            if (mode == "Light")
+            {
+                ApplyTheme(false);
+            }
+            else if (mode == "Dark")
+            {
+                ApplyTheme(true);
+            }
+            else // System (default)
+            {
+                Application.Current.UserAppTheme = AppTheme.Unspecified; // let OS drive
+                var sysDark = Application.Current.RequestedTheme == AppTheme.Dark;
+                ApplyThemeColors(sysDark);
+                PropagateThemeKeys(Application.Current.Resources,
+                    "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
+                    "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor",
+                    "PrimaryRed", "InteractivePrimaryColor", "InteractiveSecondaryColor", "BorderInteractiveColor");
+                IsDarkTheme = sysDark;
+                if (!_themeChangeSubscribed)
+                {
+                    Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
+                    _themeChangeSubscribed = true;
+                }
+                Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
+            }
         }
-        catch { /* ignore if not yet available */ }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ApplyThemeMode error: {ex.Message}");
+        }
+    }
+
+    private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
+    {
+        try
+        {
+            if (LoadThemeModePreference() != "System") return; // only in System mode
+            var isDark = e.RequestedTheme == AppTheme.Dark;
+            System.Diagnostics.Debug.WriteLine($"OS theme changed -> {(isDark ? "Dark" : "Light")} (System mode)");
+            ApplyThemeColors(isDark);
+            PropagateThemeKeys(Application.Current!.Resources,
+                "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
+                "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor",
+                "PrimaryRed", "InteractivePrimaryColor", "InteractiveSecondaryColor", "BorderInteractiveColor");
+            Application.Current!.MainPage?.ForceLayout();
+            IsDarkTheme = isDark;
+            UpdateCloseButtonImage(_closeButtonState);
+            Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"OnRequestedThemeChanged error: {ex.Message}");
+        }
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
         // Run after layout to guarantee handler exists
-        try
-        {
-            Dispatcher.Dispatch(() => RefreshSwitchThumbColors());
-        }
-        catch { /* ignore */ }
+        try { Dispatcher.Dispatch(() => RefreshSwitchThumbColors()); } catch { }
     }
 
     /// <summary>
@@ -129,31 +195,38 @@ public partial class SettingsPage : ContentPage
     #region Initialization
 
     /// <summary>
-    /// Initialize the theme state based on current application resources
+    /// Initialize the theme state based on saved preference (default: System)
     /// </summary>
     private void InitializeThemeState()
     {
         System.Diagnostics.Debug.WriteLine("=== InitializeThemeState START ===");
-        
-        // Check if DarkTheme.xaml is currently loaded
-        System.Diagnostics.Debug.WriteLine("Checking current theme state...");
-        IsDarkTheme = IsCurrentlyDarkTheme();
-        System.Diagnostics.Debug.WriteLine($"Current theme detected: {(IsDarkTheme ? "Dark" : "Light")}");
-        
-        System.Diagnostics.Debug.WriteLine($"Setting switch to: {IsDarkTheme}");
-        ThemeSwitch.IsToggled = IsDarkTheme;
-        System.Diagnostics.Debug.WriteLine($"Switch IsToggled set to: {ThemeSwitch.IsToggled}");
-        
-        // Verify theme files exist
+        // Load saved theme mode or default to System
+        _themeMode = LoadThemeModePreference();
+        System.Diagnostics.Debug.WriteLine($"Loaded ThemeMode: {_themeMode}");
+        // Set Picker selection
+        try
+        {
+            if (ThemeModePicker != null)
+            {
+                ThemeModePicker.SelectedIndex = _themeMode switch
+                {
+                    "Light" => 1,
+                    "Dark" => 2,
+                    _ => 0,
+                };
+            }
+        }
+        catch { }
+
+        // Apply mode immediately (also updates IsDarkTheme and resources)
+        ApplyThemeMode(_themeMode);
+
+        // Verify theme resources available
         VerifyThemeFilesExist();
-        
         System.Diagnostics.Debug.WriteLine("=== InitializeThemeState END ===");
 
         // Initialize close button visual for current theme
         UpdateCloseButtonImage("idle");
-
-        // Ensure switch thumbs reflect current toggled state
-        RefreshSwitchThumbColors();
     }
 
     /// <summary>
@@ -255,31 +328,21 @@ public partial class SettingsPage : ContentPage
     /// <summary>
     /// Handles theme switch toggle events
     /// </summary>
-    private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
+    private void OnThemeModePickerChanged(object sender, EventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine("=== OnThemeSwitchToggled START ===");
-        var isDarkMode = e.Value;
-        System.Diagnostics.Debug.WriteLine($"Switch toggled to: {(isDarkMode ? "Dark" : "Light")} mode");
-        
-        IsDarkTheme = isDarkMode;
-        System.Diagnostics.Debug.WriteLine($"IsDarkTheme property set to: {IsDarkTheme}");
-        
-        // Apply theme change
-        System.Diagnostics.Debug.WriteLine("Calling ApplyTheme...");
-        ApplyTheme(isDarkMode);
-        System.Diagnostics.Debug.WriteLine("ApplyTheme completed");
-        // Notify views to refresh theme-dependent templates
-        Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
-        
-        // Save theme preference
-        System.Diagnostics.Debug.WriteLine("Saving theme preference...");
-        SaveThemePreference(isDarkMode);
-        System.Diagnostics.Debug.WriteLine("Theme preference saved");
-        
-        // Ensure switch thumbs reflect current toggled state
-        RefreshSwitchThumbColors();
-        
-        System.Diagnostics.Debug.WriteLine("=== OnThemeSwitchToggled END ===");
+        try
+        {
+            var index = ThemeModePicker?.SelectedIndex ?? 0;
+            var mode = index switch { 1 => "Light", 2 => "Dark", _ => "System" };
+            System.Diagnostics.Debug.WriteLine($"ThemeModePicker changed to: {mode}");
+            _themeMode = mode;
+            SaveThemeModePreference(mode);
+            ApplyThemeMode(mode);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in OnThemeModePickerChanged: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -465,8 +528,8 @@ public partial class SettingsPage : ContentPage
             // Refresh close button visual for new theme
             UpdateCloseButtonImage(_closeButtonState);
 
-            // Ensure switch thumbs reflect current toggled state
-            RefreshSwitchThumbColors();
+            // Update in-memory flag used by UI elements
+            IsDarkTheme = isDarkTheme;
         }
         catch (Exception ex)
         {
@@ -720,14 +783,6 @@ public partial class SettingsPage : ContentPage
             // Use dispatcher to ensure UI thread and that handlers are ready
             Dispatcher.Dispatch(() =>
             {
-                if (ThemeSwitch != null)
-                {
-                    if (ThemeSwitch.IsToggled)
-                        ThemeSwitch.ThumbColor = Color.FromArgb("#FFFFFF");
-                    else
-                        ThemeSwitch.ClearValue(Switch.ThumbColorProperty);
-                }
-
                 if (SidebarCollapseSwitch != null)
                 {
                     if (SidebarCollapseSwitch.IsToggled)
@@ -745,22 +800,10 @@ public partial class SettingsPage : ContentPage
 
     #region Preferences Management
 
-    /// <summary>
-    /// Saves the user's theme preference to application preferences
-    /// </summary>
+    // Legacy bool preference kept for backward compatibility but superseded by ThemeMode
     private void SaveThemePreference(bool isDarkTheme)
     {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine($"=== SaveThemePreference: {(isDarkTheme ? "Dark" : "Light")} ===");
-            Preferences.Set("IsDarkTheme", isDarkTheme);
-            System.Diagnostics.Debug.WriteLine($"✓ Theme preference saved successfully: {(isDarkTheme ? "Dark" : "Light")}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"ERROR saving theme preference: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-        }
+        try { Preferences.Set("IsDarkTheme", isDarkTheme); } catch { }
     }
 
     /// <summary>
@@ -768,14 +811,36 @@ public partial class SettingsPage : ContentPage
     /// </summary>
     public static bool LoadThemePreference()
     {
+        try { return Preferences.Get("IsDarkTheme", false); } catch { return false; }
+    }
+
+    // New: Save/Load ThemeMode preference (System default)
+    private void SaveThemeModePreference(string mode)
+    {
         try
         {
-            return Preferences.Get("IsDarkTheme", false); // Default to light theme
+            var normalized = (mode == "Light" || mode == "Dark") ? mode : "System";
+            Preferences.Set("ThemeMode", normalized);
+            System.Diagnostics.Debug.WriteLine($"Saved ThemeMode: {normalized}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading theme preference: {ex.Message}");
-            return false; // Default to light theme on error
+            System.Diagnostics.Debug.WriteLine($"ERROR saving ThemeMode: {ex.Message}");
+        }
+    }
+
+    private string LoadThemeModePreference()
+    {
+        try
+        {
+            var mode = Preferences.Get("ThemeMode", "System");
+            if (mode != "Light" && mode != "Dark" && mode != "System") mode = "System";
+            return mode;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ERROR loading ThemeMode: {ex.Message}");
+            return "System";
         }
     }
 
@@ -821,9 +886,15 @@ public partial class SettingsPage : ContentPage
         try
         {
             System.Diagnostics.Debug.WriteLine("=== ApplySavedTheme START ===");
-            
-            bool isDarkTheme = LoadThemePreference();
-            System.Diagnostics.Debug.WriteLine($"Loaded theme preference: {(isDarkTheme ? "Dark" : "Light")}");
+            // Respect new ThemeMode preference. Fallback to legacy bool.
+            var mode = Preferences.Get("ThemeMode", "System");
+            bool? forcedDark = null;
+            if (mode == "Light") forcedDark = false;
+            else if (mode == "Dark") forcedDark = true;
+            else forcedDark = null; // System
+
+            bool isDarkTheme = forcedDark ?? (Application.Current?.RequestedTheme == AppTheme.Dark ? true : LoadThemePreference());
+            System.Diagnostics.Debug.WriteLine($"Startup Theme mode: {mode}, Effective: {(isDarkTheme ? "Dark" : "Light")}");
 
             var resources = Application.Current?.Resources;
             if (resources == null)
@@ -839,8 +910,8 @@ public partial class SettingsPage : ContentPage
                 "CardBackgroundColor", "CardAccentBackgroundColor", "CardShadowColor",
                 "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor",
                 "PrimaryRed", "InteractivePrimaryColor", "InteractiveSecondaryColor", "BorderInteractiveColor");
-            // Also set UserAppTheme to ensure consistent visual refresh across controls
-            Application.Current.UserAppTheme = isDarkTheme ? AppTheme.Dark : AppTheme.Light;
+            // Also set UserAppTheme: Unspecified for System mode, else Light/Dark
+            Application.Current.UserAppTheme = (mode == "System") ? AppTheme.Unspecified : (isDarkTheme ? AppTheme.Dark : AppTheme.Light);
             Application.Current.MainPage?.ForceLayout();
 
             System.Diagnostics.Debug.WriteLine($"✓ Saved theme applied successfully: {(isDarkTheme ? "Dark" : "Light")}");

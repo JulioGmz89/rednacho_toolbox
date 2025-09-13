@@ -19,6 +19,7 @@ public class MainViewModel : BaseViewModel
     private ToolInfo? _selectedTool;
     private bool _isSidebarCollapsed;
     private bool _isDarkTheme;
+    private bool _isProductivityExpanded;
     private string _activePage = "Dashboard"; // Default to Dashboard as active
 
     /// <summary>
@@ -183,9 +184,10 @@ public class MainViewModel : BaseViewModel
     public string DashboardIconBase => "grid_outline";
 
     /// <summary>
-    /// Gets the base name for the documentation icon (document_outline).
+    /// Gets the base name for the productivity icon (rocket).
+    /// Note: Sidebar uses AppThemeBinding for rocket_light/rocket_dark.
     /// </summary>
-    public string DocumentationIconBase => "document_outline";
+    public string ProductivityIconBase => "rocket";
 
     /// <summary>
     /// Gets the base name for the settings icon (options_outline).
@@ -207,9 +209,9 @@ public class MainViewModel : BaseViewModel
     public bool IsDashboardActive => ActivePage == "Dashboard";
 
     /// <summary>
-    /// Gets whether the Documentation page is currently active.
+    /// Gets whether the Productivity page is currently active.
     /// </summary>
-    public bool IsDocumentationActive => ActivePage == "Documentation";
+    public bool IsProductivityActive => ActivePage == "Productivity";
 
     /// <summary>
     /// Gets whether the Settings page is currently active.
@@ -227,11 +229,25 @@ public class MainViewModel : BaseViewModel
         
         // Notify all active state properties
         OnPropertyChanged(nameof(IsDashboardActive));
-        OnPropertyChanged(nameof(IsDocumentationActive));
+        OnPropertyChanged(nameof(IsProductivityActive));
         OnPropertyChanged(nameof(IsSettingsActive));
         
         System.Diagnostics.Debug.WriteLine($"Active page changed to: {pageName}");
     }
+
+    /// <summary>
+    /// Indicates whether the Productivity category in the sidebar is expanded.
+    /// </summary>
+    public bool IsProductivityExpanded
+    {
+        get => _isProductivityExpanded;
+        set => SetProperty(ref _isProductivityExpanded, value);
+    }
+
+    /// <summary>
+    /// Returns the list of tools in the Productivity category.
+    /// </summary>
+    public IEnumerable<ToolInfo> ProductivityTools => Tools.Where(t => t.Category == ToolCategory.Productivity);
 
     /// <summary>
     /// Loads user preferences for sidebar and theme state.
@@ -289,101 +305,23 @@ public class MainViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Loads sample tools for demonstration purposes.
-    /// In a real application, this would load from a service or database.
+    /// Loads only the production-ready tools. For release we hide placeholders and keep Markdown to PDF.
     /// </summary>
     private void LoadSampleTools()
     {
-        var sampleTools = new List<ToolInfo>
-        {
-            new ToolInfo(
-                "Markdown → PDF",
-                "Convierte Markdown a PDF con estilos personalizables y vista previa.",
-                "document_outline_black.png",
-                ToolCategory.Productivity,
-                typeof(MarkdownToPdfView)
-            ),
+        Tools.Clear();
 
-            new ToolInfo(
-                "Calculator", 
-                "A powerful calculator with advanced mathematical functions and unit conversions.", 
-                "calculator_icon.png", 
-                ToolCategory.Utilities),
-            
-            new ToolInfo(
-                "JSON Formatter", 
-                "Format, validate, and beautify JSON data with syntax highlighting.", 
-                "json_icon.png", 
-                ToolCategory.Development),
-            
-            new ToolInfo(
-                "Base64 Encoder/Decoder", 
-                "Encode and decode Base64 strings with support for files and text.", 
-                "base64_icon.png", 
-                ToolCategory.Development),
-            
-            new ToolInfo(
-                "Hash Generator", 
-                "Generate MD5, SHA1, SHA256, and other hash values for text and files.", 
-                "hash_icon.png", 
-                ToolCategory.Security),
-            
-            new ToolInfo(
-                "Color Picker", 
-                "Pick colors from screen, convert between formats (HEX, RGB, HSL).", 
-                "color_icon.png", 
-                ToolCategory.Utilities),
-            
-            new ToolInfo(
-                "QR Code Generator", 
-                "Generate QR codes for text, URLs, WiFi credentials, and more.", 
-                "qr_icon.png", 
-                ToolCategory.Utilities),
-            
-            new ToolInfo(
-                "System Information", 
-                "Display detailed system information including hardware and software details.", 
-                "system_icon.png", 
-                ToolCategory.System),
-            
-            new ToolInfo(
-                "Network Scanner", 
-                "Scan local network for devices, open ports, and network information.", 
-                "network_icon.png", 
-                ToolCategory.Network),
-            
-            new ToolInfo(
-                "File Hasher", 
-                "Calculate file hashes and verify file integrity with multiple algorithms.", 
-                "file_hash_icon.png", 
-                ToolCategory.FileManagement),
-            
-            new ToolInfo(
-                "Password Generator", 
-                "Generate secure passwords with customizable length and character sets.", 
-                "password_icon.png", 
-                ToolCategory.Security),
-            
-            new ToolInfo(
-                "Text Diff Viewer", 
-                "Compare two text files or strings and highlight differences.", 
-                "diff_icon.png", 
-                ToolCategory.Development),
-            
-            new ToolInfo(
-                "Image Converter", 
-                "Convert images between different formats (PNG, JPG, WebP, etc.).", 
-                "image_icon.png", 
-                ToolCategory.Media)
-        };
+        var markdownTool = new ToolInfo(
+            "Markdown to PDF",
+            "Convert Markdown to PDF with customizable styles and live preview.",
+            "md_to_pdf_lightmode_black.png",
+            ToolCategory.Productivity,
+            typeof(MarkdownToPdfView)
+        );
 
-        // Add tools to the collection
-        foreach (var tool in sampleTools)
-        {
-            Tools.Add(tool);
-        }
+        Tools.Add(markdownTool);
 
-        // Initially show all tools
+        // Initially show all tools (only Markdown to PDF now)
         ApplyFilters();
     }
 

@@ -14,6 +14,7 @@ public class ToolInfo : INotifyPropertyChanged
     private string _iconPath = string.Empty;
     private ToolCategory _category = ToolCategory.Utilities;
     private Type? _targetType;
+    private bool _isActive;
 
     /// <summary>
     /// Gets or sets the display name of the tool.
@@ -58,6 +59,16 @@ public class ToolInfo : INotifyPropertyChanged
     {
         get => _targetType;
         set => SetProperty(ref _targetType, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether this tool is the currently active/open tool in the sidebar context.
+    /// Used to show active backgrounds and the red capsule indicator in the Productivity list.
+    /// </summary>
+    public bool IsActive
+    {
+        get => _isActive;
+        set => SetProperty(ref _isActive, value);
     }
 
     /// <summary>

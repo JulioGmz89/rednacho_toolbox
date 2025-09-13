@@ -118,8 +118,7 @@ public partial class AllToolsView : ContentView
         {
             System.Diagnostics.Debug.WriteLine("Add tool button clicked");
             
-            // TODO: Implement add tool functionality in future iteration
-            DisplayAlert("Add Tool", "Add tool functionality will be implemented in a future version.", "OK");
+            // TODO: Implement add tool functionality in future iteration (popup removed)
         }
         catch (Exception ex)
         {
@@ -127,24 +126,5 @@ public partial class AllToolsView : ContentView
         }
     }
 
-    /// <summary>
-    /// Helper method to display alerts
-    /// </summary>
-    /// <param name="title">Alert title</param>
-    /// <param name="message">Alert message</param>
-    /// <param name="cancel">Cancel button text</param>
-    private async void DisplayAlert(string title, string message, string cancel)
-    {
-        try
-        {
-            if (Application.Current?.MainPage != null)
-            {
-                await Application.Current.MainPage.DisplayAlert(title, message, cancel);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error displaying alert: {ex.Message}");
-        }
-    }
+    // Removed DisplayAlert helper for release readiness
 }

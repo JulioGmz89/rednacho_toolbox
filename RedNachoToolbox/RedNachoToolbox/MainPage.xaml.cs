@@ -3,6 +3,7 @@ using Microsoft.Maui.Controls.Shapes;
 using RedNachoToolbox.Views;
 using RedNachoToolbox.Models;
 using RedNachoToolbox.Tools.MarkdownToPdf;
+using System.Linq;
 
 namespace RedNachoToolbox;
 
@@ -24,11 +25,14 @@ public partial class MainPage : ContentPage
         // Initialize main content with Dashboard
         MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
         
+        // React to sidebar collapse/expand to keep parent active only when collapsed
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        
         // Subscribe to tool open messages from views
         try
         {
             MessagingCenter.Subscribe<DashboardView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
-            MessagingCenter.Subscribe<AllToolsView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
+            MessagingCenter.Subscribe<ProductivityView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
         }
         catch (Exception ex)
         {
@@ -37,6 +41,23 @@ public partial class MainPage : ContentPage
         
         // Subscribe to appearing event to refresh ViewModel state
         this.Appearing += OnPageAppearing;
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.IsSidebarCollapsed))
+        {
+            if (ViewModel.IsSidebarCollapsed)
+            {
+                // Do not clear individual tool selection; in collapsed mode the list isn't visible.
+                // Only ensure the parent (Productivity) is marked as active.
+                if (ViewModel.ActivePage != "Productivity")
+                {
+                    ViewModel.SetActivePage("Productivity");
+                }
+                UpdateActiveButtonBackgrounds();
+            }
+        }
     }
 
     private void ShowTool(ToolInfo tool)
@@ -62,6 +83,39 @@ public partial class MainPage : ContentPage
                 // Fallback: show dashboard if not mapped
                 MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
                 System.Diagnostics.Debug.WriteLine($"No mapping for tool '{tool.Name}', showing Dashboard");
+            }
+
+            // Sync sidebar selection when a Productivity tool is opened from cards/views
+            try
+            {
+                if (tool.Category == ToolCategory.Productivity)
+                {
+                    // Mark parent Productivity as active
+                    if (ViewModel.ActivePage != "Productivity")
+                    {
+                        // Deactivate Dashboard indicators if needed
+                        if (ViewModel.IsDashboardActive)
+                        {
+                            _ = AnimateIndicatorTransition(DashboardIndicatorCapsule, false);
+                            _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, false);
+                        }
+
+                        ViewModel.SetActivePage("Productivity");
+                        _ = AnimateIndicatorTransition(ProductivityIndicatorCapsule, true);
+                        _ = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, true);
+                        UpdateActiveButtonBackgrounds();
+                    }
+
+                    // Only reflect child selection visually when expanded
+                    if (!ViewModel.IsSidebarCollapsed)
+                    {
+                        _ = SelectProductivityToolInSidebarAsync(tool);
+                    }
+                }
+            }
+            catch (Exception syncEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error syncing sidebar selection for tool '{tool.Name}': {syncEx.Message}");
             }
         }
         catch (Exception ex)
@@ -192,15 +246,15 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Documentation Hover Events - No hover effect when already active
+    // Productivity Hover Events (legacy alias) - mapped to Productivity state
     private void OnDocumentationPointerEntered(object sender, PointerEventArgs e)
     {
         if (sender is Frame frame)
         {
             // Don't show hover effect if button is already active (same color)
-            if (ViewModel.IsDocumentationActive)
+            if (ViewModel.IsProductivityActive)
             {
-                System.Diagnostics.Debug.WriteLine("Documentation hover entered - Button is active, no hover effect needed");
+                System.Diagnostics.Debug.WriteLine("Productivity (alias) hover entered - Button is active, no hover effect needed");
                 return;
             }
             
@@ -210,7 +264,7 @@ public partial class MainPage : ContentPage
                 : Color.FromArgb("#F5F5F5"); // Light gray for light theme
             
             frame.BackgroundColor = hoverColor;
-            System.Diagnostics.Debug.WriteLine($"Documentation hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
+            System.Diagnostics.Debug.WriteLine($"Productivity (alias) hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
         }
     }
 
@@ -219,14 +273,14 @@ public partial class MainPage : ContentPage
         if (sender is Frame frame)
         {
             // Don't change color if button is active (should stay active color)
-            if (ViewModel.IsDocumentationActive)
+            if (ViewModel.IsProductivityActive)
             {
-                System.Diagnostics.Debug.WriteLine("Documentation hover exited - Button is active, maintaining active color");
+                System.Diagnostics.Debug.WriteLine("Productivity (alias) hover exited - Button is active, maintaining active color");
                 return;
             }
             
             frame.BackgroundColor = Colors.Transparent;
-            System.Diagnostics.Debug.WriteLine("Documentation hover exited - Returned to transparent");
+            System.Diagnostics.Debug.WriteLine("Productivity (alias) hover exited - Returned to transparent");
         }
     }
 
@@ -299,12 +353,16 @@ public partial class MainPage : ContentPage
             }
             
             // Animate previous active indicators to deactivate (if any)
-            if (ViewModel.IsDocumentationActive)
+            if (ViewModel.IsProductivityActive)
             {
-                _ = AnimateIndicatorTransition(DocumentationIndicatorCapsule, false);
-                _ = AnimateCollapsedDotTransition(DocumentationIndicatorDotCollapsed, false);
+                _ = AnimateIndicatorTransition(ProductivityIndicatorCapsule, false);
+                _ = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, false);
             }
             
+            // Clear selection from Productivity tool list
+            ClearAllProductivityToolActiveFlags();
+            ClearProductivityListActiveStateUI();
+
             // Set Dashboard as active page
             ViewModel.SetActivePage("Dashboard");
             
@@ -330,16 +388,16 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private async void OnDocumentationClicked(object sender, EventArgs e)
+    private async void OnProductivityClicked(object sender, EventArgs e)
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Event handler called");
+            System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Event handler called");
             
             // Enhanced visual feedback for Frame-based button with theme-aware colors
             if (sender is Frame frame)
             {
-                System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Frame found, applying visual states");
+                System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Frame found, applying visual states");
                 
                 // Pressed state - theme-aware pressed color
                 var pressedColor = ViewModel.IsDarkTheme 
@@ -348,7 +406,7 @@ public partial class MainPage : ContentPage
                 
                 frame.BackgroundColor = pressedColor;
                 frame.Opacity = 0.9;
-                System.Diagnostics.Debug.WriteLine($"OnDocumentationClicked - Applied pressed state ({pressedColor})");
+                System.Diagnostics.Debug.WriteLine($"OnProductivityClicked - Applied pressed state ({pressedColor})");
                 await Task.Delay(150); // Quick pressed feedback
                 
                 // Return to hover state briefly
@@ -358,16 +416,16 @@ public partial class MainPage : ContentPage
                 
                 frame.BackgroundColor = hoverColor;
                 frame.Opacity = 1.0;
-                System.Diagnostics.Debug.WriteLine($"OnDocumentationClicked - Returned to hover state ({hoverColor})");
+                System.Diagnostics.Debug.WriteLine($"OnProductivityClicked - Returned to hover state ({hoverColor})");
                 await Task.Delay(100); // Brief hover feedback
                 
                 // Return to normal
                 frame.BackgroundColor = Colors.Transparent;
-                System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Returned to normal state");
+                System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Returned to normal state");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("OnDocumentationClicked - Sender is not a Frame!");
+                System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Sender is not a Frame!");
             }
             
             // Animate previous active indicators to deactivate (if any)
@@ -377,26 +435,192 @@ public partial class MainPage : ContentPage
                 _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, false);
             }
             
-            // Set Documentation as active page
-            ViewModel.SetActivePage("Documentation");
+            // Clear selection from Productivity tool list (navigating to category root)
+            ClearAllProductivityToolActiveFlags();
+            ClearProductivityListActiveStateUI();
+
+            // Set Productivity as active page
+            ViewModel.SetActivePage("Productivity");
             
             // Animate new active indicators (both expanded capsule and collapsed dot)
-            var capsuleTask = AnimateIndicatorTransition(DocumentationIndicatorCapsule, true);
-            var dotTask = AnimateCollapsedDotTransition(DocumentationIndicatorDotCollapsed, true);
+            var capsuleTask = AnimateIndicatorTransition(ProductivityIndicatorCapsule, true);
+            var dotTask = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, true);
             await Task.WhenAll(capsuleTask, dotTask);
             
             // Update active button backgrounds
             UpdateActiveButtonBackgrounds();
             
-            // Swap main content to AllTools view (acts as documentation/catalog)
-            MainContentHost.Content = new AllToolsView { BindingContext = ViewModel };
+            // Swap main content to Productivity view (lists only Productivity tools)
+            // Ensure category is set to Productivity before hosting the view
+            ViewModel.SelectedCategory = ToolCategory.Productivity;
+            MainContentHost.Content = new ProductivityView { BindingContext = ViewModel };
             
-            System.Diagnostics.Debug.WriteLine("Documentation view selected - set as active page");
+            System.Diagnostics.Debug.WriteLine("Productivity view selected - set as active page and filtered by Productivity");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Documentation navigation error: {ex.Message}");
-            await DisplayAlert("Error", "Could not access Documentation.", "OK");
+            System.Diagnostics.Debug.WriteLine($"Productivity navigation error: {ex.Message}");
+            await DisplayAlert("Error", "Could not access Productivity.", "OK");
+        }
+    }
+
+    // Productivity Hover Events - No hover effect when already active
+    private void OnProductivityPointerEntered(object sender, PointerEventArgs e)
+    {
+        if (sender is Frame frame)
+        {
+            // Don't show hover effect if button is already active (same color)
+            if (ViewModel.IsProductivityActive)
+            {
+                System.Diagnostics.Debug.WriteLine("Productivity hover entered - Button is active, no hover effect needed");
+                return;
+            }
+            var hoverColor = ViewModel.IsDarkTheme
+                ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
+                : Color.FromArgb("#F5F5F5"); // Light gray for light theme
+            frame.BackgroundColor = hoverColor;
+            System.Diagnostics.Debug.WriteLine($"Productivity hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
+        }
+    }
+
+    private void OnProductivityPointerExited(object sender, PointerEventArgs e)
+    {
+        if (sender is Frame frame)
+        {
+            // Don't change color if button is active (should stay active color)
+            if (ViewModel.IsProductivityActive)
+            {
+                System.Diagnostics.Debug.WriteLine("Productivity hover exited - Button is active, maintaining active color");
+                return;
+            }
+            frame.BackgroundColor = Colors.Transparent;
+            System.Diagnostics.Debug.WriteLine("Productivity hover exited - Returned to transparent");
+        }
+    }
+
+    // Chevron toggle for Productivity category list in sidebar
+    private async void OnProductivityChevronTapped(object sender, EventArgs e)
+    {
+        try
+        {
+            bool expand = !ViewModel.IsProductivityExpanded;
+            ViewModel.IsProductivityExpanded = expand;
+
+            // Rotate chevron
+            if (ProductivityChevronImage != null)
+            {
+                await ProductivityChevronImage.RotateTo(expand ? 180 : 0, 150, Easing.CubicInOut);
+            }
+
+            // Fade list in/out
+            if (ProductivityListContainer != null)
+            {
+                if (expand)
+                {
+                    ProductivityListContainer.Opacity = 0;
+                    ProductivityListContainer.IsVisible = true;
+                    await ProductivityListContainer.FadeTo(1, 150, Easing.CubicInOut);
+                }
+                else
+                {
+                    await ProductivityListContainer.FadeTo(0, 150, Easing.CubicInOut);
+                    ProductivityListContainer.IsVisible = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error toggling Productivity chevron: {ex.Message}");
+        }
+    }
+
+    // Handle taps on individual Productivity tools inside the expanded sidebar list
+    private async void OnProductivitySidebarToolTapped(object sender, EventArgs e)
+    {
+        try
+        {
+            // Apply pressed visual feedback similar to other sidebar buttons
+            if (sender is Frame frame)
+            {
+                var pressedColor = ViewModel.IsDarkTheme 
+                    ? Color.FromArgb("#404040") // Darker gray for dark theme
+                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
+                frame.BackgroundColor = pressedColor;
+                frame.Opacity = 0.9;
+                await Task.Delay(150);
+
+                var hoverColor = ViewModel.IsDarkTheme 
+                    ? Color.FromArgb("#2A2A2A")
+                    : Color.FromArgb("#F5F5F5");
+                frame.BackgroundColor = hoverColor;
+                frame.Opacity = 1.0;
+                await Task.Delay(100);
+                // Return to normal; active state is indicated only by the red capsule
+                frame.BackgroundColor = Colors.Transparent;
+            }
+
+            if (sender is Element el && el.BindingContext is ToolInfo tool)
+            {
+                // Activate this tool, deactivate others (UI + data)
+                ClearAllProductivityToolActiveFlags();
+                ClearProductivityListActiveStateUI();
+
+                tool.IsActive = true;
+
+                // Animate the tool's capsule indicator if accessible
+                if (sender is Frame toolFrame)
+                {
+                    var capsule = toolFrame.FindByName<Border>("ToolIndicatorCapsule");
+                    _ = AnimateIndicatorTransition(capsule, true);
+                    // Do not keep background; only capsule indicates active
+                    toolFrame.BackgroundColor = Colors.Transparent;
+                }
+
+                // Add to recently used, then open tool just like from Dashboard
+                ViewModel?.AddToRecentlyUsed(tool);
+                ShowTool(tool);
+                System.Diagnostics.Debug.WriteLine($"Opened tool from Productivity sidebar list: {tool.Name}");
+
+                // Ensure parent remains active (for collapsed state indicators)
+                if (ViewModel.ActivePage != "Productivity")
+                {
+                    // Deactivate Dashboard indicators if needed
+                    if (ViewModel.IsDashboardActive)
+                    {
+                        _ = AnimateIndicatorTransition(DashboardIndicatorCapsule, false);
+                        _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, false);
+                    }
+
+                    ViewModel.SetActivePage("Productivity");
+                    // Animate parent Productivity indicators to active
+                    _ = AnimateIndicatorTransition(ProductivityIndicatorCapsule, true);
+                    _ = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, true);
+                    UpdateActiveButtonBackgrounds();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error handling Productivity sidebar tool tap: {ex.Message}");
+        }
+    }
+
+    private void OnProductivitySidebarToolPointerEntered(object sender, PointerEventArgs e)
+    {
+        if (sender is Frame frame)
+        {
+            var hoverColor = ViewModel.IsDarkTheme 
+                ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
+                : Color.FromArgb("#F5F5F5"); // Light gray for light theme
+            frame.BackgroundColor = hoverColor;
+        }
+    }
+
+    private void OnProductivitySidebarToolPointerExited(object sender, PointerEventArgs e)
+    {
+        if (sender is Frame frame)
+        {
+            frame.BackgroundColor = Colors.Transparent;
         }
     }
 
@@ -514,9 +738,9 @@ public partial class MainPage : ContentPage
                 DashboardButtonFrame.BackgroundColor = ViewModel.IsDashboardActive ? activeColor : transparentColor;
             }
             
-            if (DocumentationButtonFrame != null)
+            if (ProductivityButtonFrame != null)
             {
-                DocumentationButtonFrame.BackgroundColor = ViewModel.IsDocumentationActive ? activeColor : transparentColor;
+                ProductivityButtonFrame.BackgroundColor = ViewModel.IsProductivityActive ? activeColor : transparentColor;
             }
             
             // Update collapsed buttons
@@ -525,9 +749,9 @@ public partial class MainPage : ContentPage
                 DashboardButtonFrameCollapsed.BackgroundColor = ViewModel.IsDashboardActive ? activeColor : transparentColor;
             }
             
-            if (DocumentationButtonFrameCollapsed != null)
+            if (ProductivityButtonFrameCollapsed != null)
             {
-                DocumentationButtonFrameCollapsed.BackgroundColor = ViewModel.IsDocumentationActive ? activeColor : transparentColor;
+                ProductivityButtonFrameCollapsed.BackgroundColor = ViewModel.IsProductivityActive ? activeColor : transparentColor;
             }
             
             System.Diagnostics.Debug.WriteLine($"Updated active button backgrounds (matching hover colors) - Active page: {ViewModel.ActivePage}, Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}");
@@ -544,6 +768,103 @@ public partial class MainPage : ContentPage
         // visual feedback is now handled individually in each event handler
         // This method is kept for compatibility but no longer needed
         System.Diagnostics.Debug.WriteLine("ResetButtonStyles called - using Frame-based buttons now");
+    }
+
+    private async Task SelectProductivityToolInSidebarAsync(ToolInfo tool)
+    {
+        try
+        {
+            // Expand the Productivity list if not already
+            if (!ViewModel.IsProductivityExpanded)
+            {
+                ViewModel.IsProductivityExpanded = true;
+                // Allow UI to create item views
+                await Task.Delay(50);
+            }
+
+            // Clear current selection and UI, then set the matching tool active
+            ClearAllProductivityToolActiveFlags();
+            ClearProductivityListActiveStateUI();
+            var tools = ViewModel.ProductivityTools?.ToList() ?? new List<ToolInfo>();
+            var index = tools.FindIndex(t => string.Equals(t.Name, tool.Name, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0)
+            {
+                tools[index].IsActive = true;
+
+                // Try to update the visuals for the corresponding item
+                await Dispatcher.DispatchAsync(async () =>
+                {
+                    try
+                    {
+                        // Ensure children are realized
+                        if (ProductivityListContainer?.Children?.Count <= index)
+                        {
+                            await Task.Delay(50);
+                        }
+
+                        if (ProductivityListContainer?.Children != null && ProductivityListContainer.Children.Count > index)
+                        {
+                            if (ProductivityListContainer.Children[index] is Frame itemFrame)
+                            {
+                                // Do not keep background; only capsule indicates active
+                                itemFrame.BackgroundColor = Colors.Transparent;
+
+                                var cap = itemFrame.FindByName<Border>("ToolIndicatorCapsule");
+                                if (cap != null)
+                                {
+                                    _ = AnimateIndicatorTransition(cap, true);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception uiex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error updating sidebar visuals for tool '{tool.Name}': {uiex.Message}");
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error selecting Productivity tool in sidebar: {ex.Message}");
+        }
+    }
+
+    private void ClearAllProductivityToolActiveFlags()
+    {
+        try
+        {
+            foreach (var t in ViewModel.ProductivityTools.ToList())
+            {
+                if (t.IsActive)
+                    t.IsActive = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error clearing Productivity tool active flags: {ex.Message}");
+        }
+    }
+
+    private void ClearProductivityListActiveStateUI()
+    {
+        try
+        {
+            if (ProductivityListContainer?.Children == null) return;
+            foreach (var child in ProductivityListContainer.Children)
+            {
+                if (child is Frame f)
+                {
+                    f.BackgroundColor = Colors.Transparent;
+                    var cap = f.FindByName<Border>("ToolIndicatorCapsule");
+                    if (cap != null) cap.IsVisible = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error clearing Productivity list UI states: {ex.Message}");
+        }
     }
 
     /// <summary>

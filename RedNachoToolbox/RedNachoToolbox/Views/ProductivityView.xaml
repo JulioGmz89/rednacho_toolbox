@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
+             x:Class="RedNachoToolbox.Views.ProductivityView"
+             x:DataType="viewmodels:MainViewModel">
+    
+    <Grid RowDefinitions="Auto, Auto, *" 
+          RowSpacing="16"
+          Padding="20">
+        
+        <!-- Header Section -->
+        <VerticalStackLayout Grid.Row="0" Spacing="8">
+            <Label Text="Productivity"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   TextColor="{DynamicResource TextColor}"
+                   HorizontalOptions="Start"/>
+            
+            <Label Text="{Binding FilteredToolsCount, StringFormat='Showing {0} tools'}"
+                   FontSize="14"
+                   TextColor="{DynamicResource TextColorSecondary}"
+                   HorizontalOptions="Start"/>
+        </VerticalStackLayout>
+        
+        <!-- Search Section (no Clear button here to keep the category filter fixed) -->
+        <Grid Grid.Row="1" ColumnDefinitions="*">
+            <SearchBar Grid.Column="0"
+                       Text="{Binding SearchText}"
+                       Placeholder="Search tools..."
+                       BackgroundColor="{DynamicResource InputBackgroundColor}"
+                       TextColor="{DynamicResource InputTextColor}"
+                       PlaceholderColor="{DynamicResource InputPlaceholderColor}"
+                       CancelButtonColor="{DynamicResource InteractivePrimaryColor}"
+                       VerticalOptions="Center"
+                       SearchButtonPressed="OnSearchButtonPressed"
+                       TextChanged="OnSearchTextChanged" />
+        </Grid>
+        
+        <!-- Tools Collection View -->
+        <ScrollView Grid.Row="2">
+            <CollectionView ItemsSource="{Binding FilteredTools}"
+                            ItemTemplate="{StaticResource ToolCardTemplate}"
+                            BackgroundColor="Transparent"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedTool}"
+                            SelectionChanged="OnToolSelectionChanged">
+                
+                <!-- Grid Layout for responsive design -->
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical"
+                                     Span="{OnPlatform Default=2, WinUI=3}"
+                                     HorizontalItemSpacing="12"
+                                     VerticalItemSpacing="12"/>
+                </CollectionView.ItemsLayout>
+                
+                <!-- Empty View when no tools match filters -->
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="40"
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="Center">
+                        <Label Text="🔍"
+                               FontSize="48"
+                               HorizontalOptions="Center"
+                               Margin="0,0,0,16"/>
+                        <Label Text="No tools found"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource TextColor}"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Try adjusting your search"
+                               FontSize="14"
+                               TextColor="{DynamicResource TextColorSecondary}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"/>
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </ScrollView>
+    </Grid>
+</ContentView>

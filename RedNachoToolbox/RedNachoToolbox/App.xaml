@@ -37,6 +37,20 @@
                 <Setter Property="FontFamily" Value="InterRegular" />
             </Style>
             
+            <!-- Global Input Container Style: use this Border style to wrap inputs (Entry/Picker)
+                 to avoid double borders across the app. -->
+            <Style x:Key="InputContainerBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource InputBackgroundColor}" />
+                <Setter Property="Stroke" Value="{DynamicResource InputBorderColor}" />
+                <Setter Property="StrokeThickness" Value="0" />
+                <Setter Property="Padding" Value="6" />
+                <Setter Property="StrokeShape">
+                    <Setter.Value>
+                        <RoundRectangle CornerRadius="8" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
             <!-- Specific Font Weight Styles -->
             <Style x:Key="HeaderStyle" TargetType="Label">
                 <Setter Property="FontFamily" Value="InterBold" />
@@ -66,8 +80,7 @@
             <!-- Tool Card DataTemplate -->
             <DataTemplate x:Key="ToolCardTemplate">
                 <Border BackgroundColor="{DynamicResource CardBackgroundColor}"
-                        Stroke="{DynamicResource BorderColorLight}"
-                        StrokeThickness="1"
+                        StrokeThickness="0"
                         Padding="12"
                         Margin="0"
                         HeightRequest="120"
@@ -94,8 +107,9 @@
                                 BackgroundColor="{DynamicResource CardAccentBackgroundColor}"
                                 VerticalOptions="Center"
                                 HorizontalOptions="Center"
-                                WidthRequest="64"
-                                HeightRequest="64">
+                                WidthRequest="80"
+                                HeightRequest="80"
+                                StrokeThickness="0">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8"/>
                             </Border.StrokeShape>
@@ -104,8 +118,8 @@
                                    Aspect="AspectFit"
                                    VerticalOptions="Center"
                                    HorizontalOptions="Center"
-                                   WidthRequest="48"
-                                   HeightRequest="48">
+                                   WidthRequest="64"
+                                   HeightRequest="64">
                                 <!-- Fallback for missing icons -->
                                 <Image.Triggers>
                                     <DataTrigger TargetType="Image" 
@@ -117,6 +131,13 @@
                                                  Binding="{Binding IconPath}" 
                                                  Value="{x:Null}">
                                         <Setter Property="Source" Value="dotnet_bot.png"/>
+                                    </DataTrigger>
+                                    <!-- Override icon for Markdown to PDF tool: theme-aware card icons -->
+                                    <DataTrigger TargetType="Image" 
+                                                 Binding="{Binding Name}" 
+                                                 Value="Markdown to PDF">
+                                        <Setter Property="Source" 
+                                                Value="{AppThemeBinding Light=md_to_pdf_lightmode.png, Dark=md_to_pdf_darkmode.png}" />
                                     </DataTrigger>
                                 </Image.Triggers>
                             </Image>

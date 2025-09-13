@@ -12,6 +12,7 @@
                     <Label Text="Settings"
                            FontSize="28"
                            Style="{StaticResource HeaderStyle}"
+                           FontAttributes="Bold"
                            HorizontalOptions="Start" />
                     
                     <Label Text="Customize your Red Nacho ToolBox experience"
@@ -65,23 +66,33 @@
                                Style="{StaticResource SecondaryTextStyle}" />
                     </VerticalStackLayout>
 
-                    <!-- Theme Toggle Switch -->
+                    <!-- Theme Mode Picker (System/Light/Dark) -->
                     <Grid ColumnDefinitions="*, Auto" 
                           ColumnSpacing="12">
                         
                         <Label Grid.Column="0"
-                               Text="Dark Mode"
+                               Text="Theme"
                                FontSize="16"
                                Style="{StaticResource BodyTextStyle}"
                                FontFamily="InterSemiBold"
                                VerticalOptions="Center" />
 
-                        <Switch x:Name="ThemeSwitch"
-                                Grid.Column="1"
-                                IsToggled="{Binding IsDarkTheme}"
-                                Toggled="OnThemeSwitchToggled"
-                                VerticalOptions="Center"
-                                HorizontalOptions="End" />
+                        <Border Grid.Column="1"
+                                Style="{StaticResource InputContainerBorderStyle}"
+                                HorizontalOptions="End"
+                                WidthRequest="200">
+                            <Picker x:Name="ThemeModePicker"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{DynamicResource InputTextColor}"
+                                    TitleColor="{DynamicResource InputTextColor}"
+                                    SelectedIndexChanged="OnThemeModePickerChanged">
+                                <Picker.Items>
+                                    <x:String>System</x:String>
+                                    <x:String>Light</x:String>
+                                    <x:String>Dark</x:String>
+                                </Picker.Items>
+                            </Picker>
+                        </Border>
                     </Grid>
 
                     <!-- Sidebar Collapse Toggle Switch -->

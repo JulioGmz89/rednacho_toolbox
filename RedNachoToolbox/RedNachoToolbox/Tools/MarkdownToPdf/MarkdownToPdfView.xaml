@@ -18,10 +18,10 @@
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="0,0,0,12">
             <VerticalStackLayout Spacing="2">
-                <Label Text="Markdown → PDF" FontSize="22" FontFamily="InterSemiBold" TextColor="{DynamicResource TextColor}"/>
-                <Label Text="Convierte Markdown a PDF con estilos personalizados y vista previa en vivo." FontSize="14" TextColor="{DynamicResource TextColorSecondary}"/>
+                <Label Text="Markdown to PDF" FontSize="22" FontFamily="InterSemiBold" FontAttributes="Bold" TextColor="{DynamicResource TextColor}"/>
+                <Label Text="Convert Markdown to PDF with customizable styles and live preview." FontSize="14" TextColor="{DynamicResource TextColorSecondary}"/>
             </VerticalStackLayout>
-            <Button Grid.Column="1" Text="Generar PDF" Padding="16,10" Clicked="OnGeneratePdfClicked" BackgroundColor="{DynamicResource PrimaryButtonBackgroundColor}" TextColor="{DynamicResource PrimaryButtonTextColor}" CornerRadius="8"/>
+            <Button Grid.Column="1" Text="Generate PDF" Padding="16,10" Clicked="OnGeneratePdfClicked" BackgroundColor="{DynamicResource PrimaryButtonBackgroundColor}" TextColor="{DynamicResource PrimaryButtonTextColor}" CornerRadius="8"/>
         </Grid>
 
         <!-- Body -->
@@ -30,26 +30,29 @@
             <ScrollView Grid.Column="0">
                 <VerticalStackLayout Spacing="16">
                     <!-- Style Editor -->
-                    <Frame BackgroundColor="{DynamicResource CardBackgroundColor}" Padding="14" HasShadow="False" BorderColor="{DynamicResource BorderColorMedium}" CornerRadius="10">
+                    <Frame BackgroundColor="{DynamicResource CardBackgroundColor}" Padding="14" HasShadow="True" BorderColor="Transparent" CornerRadius="10">
+                        <Frame.Shadow>
+                            <Shadow Brush="#000000" Opacity="0.42" Radius="30" Offset="0,16" />
+                        </Frame.Shadow>
                         <VerticalStackLayout Spacing="12">
-                            <Label Text="Opciones de estilo" FontFamily="InterSemiBold" FontSize="16" TextColor="{DynamicResource TextColor}"/>
+                            <Label Text="Style options" FontFamily="InterSemiBold" FontSize="16" TextColor="{DynamicResource TextColor}"/>
 
                             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
-                                <Label Grid.Row="0" Grid.Column="0" Text="Fuente" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
-                                <Border Grid.Row="0" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                <Label Grid.Row="0" Grid.Column="0" Text="Font" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
+                                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource InputContainerBorderStyle}">
                                     <Picker BackgroundColor="Transparent" ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding FontFamily}" TextColor="{DynamicResource InputTextColor}"/>
                                 </Border>
 
-                                <Label Grid.Row="1" Grid.Column="0" Text="Tamaño (pt)" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
+                                <Label Grid.Row="1" Grid.Column="0" Text="Size (pt)" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
                                 <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <Slider Minimum="10" Maximum="28" Value="{Binding FontSize}"
+                                    <Slider Minimum="8" Maximum="24" Value="{Binding FontSize}"
                                             ThumbColor="{DynamicResource InteractivePrimaryColor}"
                                             MinimumTrackColor="{DynamicResource InteractivePrimaryColor}"
                                             MaximumTrackColor="{DynamicResource BorderColorLight}"/>
                                     <Label Grid.Column="1" Text="{Binding FontSize, StringFormat='{}{0:0} pt'}" TextColor="{DynamicResource TextColor}" VerticalOptions="Center"/>
                                 </Grid>
 
-                                <Label Grid.Row="2" Grid.Column="0" Text="Color texto" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
+                                <Label Grid.Row="2" Grid.Column="0" Text="Text color" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
                                 <Border Grid.Row="2" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
                                     <!-- Compact color picker: header with swatch + hex, expandable picker body -->
                                     <toolkit:Expander x:Name="ColorExpander" ExpandedChanged="OnColorExpanderExpandedChanged">
@@ -69,13 +72,13 @@
                                     </toolkit:Expander>
                                 </Border>
 
-                                <Label Grid.Row="3" Grid.Column="0" Text="Márgenes (cm)" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
+                                <Label Grid.Row="3" Grid.Column="0" Text="Margins (cm)" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
                                 <!-- 2x2 grid for better width per input -->
                                 <Grid Grid.Row="3" Grid.Column="1" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="6">
                                     <!-- Top -->
                                     <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
-                                        <Label Text="Arriba" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
-                                        <Border Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                        <Label Text="Top" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
+                                        <Border Style="{StaticResource InputContainerBorderStyle}">
                                             <Entry Text="{Binding MarginTop, Mode=TwoWay, Converter={StaticResource StringToDoubleConverter}}" 
                                                    Keyboard="Numeric" HorizontalOptions="Fill" BackgroundColor="Transparent" 
                                                    TextColor="{DynamicResource InputTextColor}" Placeholder="0" MaxLength="6" />
@@ -83,8 +86,8 @@
                                     </VerticalStackLayout>
                                     <!-- Right -->
                                     <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
-                                        <Label Text="Derecha" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
-                                        <Border Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                        <Label Text="Right" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
+                                        <Border Style="{StaticResource InputContainerBorderStyle}">
                                             <Entry Text="{Binding MarginRight, Mode=TwoWay, Converter={StaticResource StringToDoubleConverter}}" 
                                                    Keyboard="Numeric" HorizontalOptions="Fill" BackgroundColor="Transparent" 
                                                    TextColor="{DynamicResource InputTextColor}" Placeholder="0" MaxLength="6" />
@@ -92,8 +95,8 @@
                                     </VerticalStackLayout>
                                     <!-- Bottom -->
                                     <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
-                                        <Label Text="Abajo" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
-                                        <Border Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                        <Label Text="Bottom" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
+                                        <Border Style="{StaticResource InputContainerBorderStyle}">
                                             <Entry Text="{Binding MarginBottom, Mode=TwoWay, Converter={StaticResource StringToDoubleConverter}}" 
                                                    Keyboard="Numeric" HorizontalOptions="Fill" BackgroundColor="Transparent" 
                                                    TextColor="{DynamicResource InputTextColor}" Placeholder="0" MaxLength="6" />
@@ -101,8 +104,8 @@
                                     </VerticalStackLayout>
                                     <!-- Left -->
                                     <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
-                                        <Label Text="Izquierda" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
-                                        <Border Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                        <Label Text="Left" FontSize="12" TextColor="{DynamicResource TextColorSecondary}"/>
+                                        <Border Style="{StaticResource InputContainerBorderStyle}">
                                             <Entry Text="{Binding MarginLeft, Mode=TwoWay, Converter={StaticResource StringToDoubleConverter}}" 
                                                    Keyboard="Numeric" HorizontalOptions="Fill" BackgroundColor="Transparent" 
                                                    TextColor="{DynamicResource InputTextColor}" Placeholder="0" MaxLength="6" />
@@ -110,8 +113,8 @@
                                     </VerticalStackLayout>
                                 </Grid>
 
-                                <Label Grid.Row="4" Grid.Column="0" Text="Tamaño página" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
-                                <Border Grid.Row="4" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                <Label Grid.Row="4" Grid.Column="0" Text="Page size" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
+                                <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource InputContainerBorderStyle}">
                                     <Picker BackgroundColor="Transparent" SelectedItem="{Binding PageSize}" TextColor="{DynamicResource InputTextColor}">
                                         <Picker.Items>
                                             <x:String>A4</x:String>
@@ -120,8 +123,8 @@
                                     </Picker>
                                 </Border>
 
-                                <Label Grid.Row="5" Grid.Column="0" Text="Tema" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
-                                <Border Grid.Row="5" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
+                                <Label Grid.Row="5" Grid.Column="0" Text="Theme" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
+                                <Border Grid.Row="5" Grid.Column="1" Style="{StaticResource InputContainerBorderStyle}">
                                     <Picker BackgroundColor="Transparent" SelectedItem="{Binding Theme}" TextColor="{DynamicResource InputTextColor}">
                                         <Picker.Items>
                                             <x:String>Light</x:String>
@@ -138,14 +141,17 @@
             </ScrollView>
 
             <!-- Right panel: Live Preview -->
-            <Frame Grid.Column="1" BackgroundColor="{DynamicResource CardBackgroundColor}" Padding="0" HasShadow="False" BorderColor="{DynamicResource BorderColorMedium}" CornerRadius="10">
+            <Frame Grid.Column="1" BackgroundColor="{DynamicResource CardBackgroundColor}" Padding="0" HasShadow="True" BorderColor="Transparent" CornerRadius="10">
+                <Frame.Shadow>
+                    <Shadow Brush="#000000" Opacity="0.42" Radius="30" Offset="0,16" />
+                </Frame.Shadow>
                 <Grid RowDefinitions="Auto,*">
                     <!-- Header with segmented selector (no title label) -->
                     <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="12" BackgroundColor="{DynamicResource CardAccentBackgroundColor}">
                         <Frame Grid.Column="0" BackgroundColor="Transparent" Padding="2" HasShadow="False" BorderColor="{DynamicResource BorderColorMedium}" CornerRadius="10" VerticalOptions="Center">
                             <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="2">
-                                <!-- Vista previa tab -->
-                                <Button Text="Vista previa" Padding="12,6" CornerRadius="8" Clicked="OnPreviewTabClicked" BackgroundColor="Transparent" TextColor="{DynamicResource TextColorSecondary}">
+                                <!-- Preview tab -->
+                                <Button Text="Preview" Padding="12,6" CornerRadius="8" Clicked="OnPreviewTabClicked" BackgroundColor="Transparent" TextColor="{DynamicResource TextColorSecondary}">
                                     <Button.Triggers>
                                         <DataTrigger TargetType="Button" Binding="{Binding IsEditorMode}" Value="False">
                                             <Setter Property="BackgroundColor" Value="{DynamicResource SelectionBackgroundColor}" />
