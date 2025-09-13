@@ -28,7 +28,7 @@
                         <VerticalStackLayout Spacing="12">
                             <Label Text="Style options" FontFamily="InterSemiBold" FontSize="16" TextColor="{DynamicResource TextColor}"/>
 
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
                                 <Label Grid.Row="0" Grid.Column="0" Text="Font" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
                                 <Border Grid.Row="0" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
                                     <Picker BackgroundColor="Transparent" ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding FontFamily}" TextColor="{DynamicResource InputTextColor}"/>
@@ -74,15 +74,7 @@
                                     </Picker>
                                 </Border>
 
-                                <Label Grid.Row="5" Grid.Column="0" Text="Theme" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
-                                <Border Grid.Row="5" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
-                                    <Picker BackgroundColor="Transparent" SelectedItem="{Binding Theme}" TextColor="{DynamicResource InputTextColor}">
-                                        <Picker.Items>
-                                            <x:String>Light</x:String>
-                                            <x:String>Dark</x:String>
-                                        </Picker.Items>
-                                    </Picker>
-                                </Border>
+                                
                             </Grid>
                         </VerticalStackLayout>
                     </Frame>

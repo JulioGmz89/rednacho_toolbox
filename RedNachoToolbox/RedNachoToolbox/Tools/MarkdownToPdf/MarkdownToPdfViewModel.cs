@@ -7,6 +7,8 @@ using System.IO;
 using Microsoft.Maui.Graphics;
 using HtmlRendererCore.PdfSharp;
 using PdfSharpCore.Pdf;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox.Tools.MarkdownToPdf;
 
@@ -102,11 +104,11 @@ public class MarkdownToPdfViewModel : BaseViewModel
         set { if (SetProperty(ref _pageSize, value)) RebuildPreviewHtml(); }
     }
 
-    private string _theme = "Light";
+    private string _theme = "Light"; // Managed internally to follow app theme
     public string Theme
     {
         get => _theme;
-        set { if (SetProperty(ref _theme, value)) RebuildPreviewHtml(); }
+        private set { if (SetProperty(ref _theme, value)) RebuildPreviewHtml(); }
     }
 
     public string MarkdownText
@@ -170,6 +172,22 @@ public class MarkdownToPdfViewModel : BaseViewModel
         // Prefill the editor with the same content as the placeholder sample
         // so users see a ready-to-edit example immediately.
         MarkdownText = _sampleMarkdown;
+
+        // Initialize theme from app and listen for changes
+        try
+        {
+            Theme = (Application.Current?.RequestedTheme == AppTheme.Dark) ? "Dark" : "Light";
+        }
+        catch { Theme = "Light"; }
+
+        try
+        {
+            WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, (recipient, message) =>
+            {
+                Theme = message.Value ? "Dark" : "Light";
+            });
+        }
+        catch { /* ignore messenger registration errors */ }
     }
 
     public void RebuildPreviewHtml()
@@ -268,9 +286,10 @@ public class MarkdownToPdfViewModel : BaseViewModel
         };
 
         var textColor = string.IsNullOrWhiteSpace(TextColorHex) ? "#222222" : TextColorHex.Trim();
-        var bg = Theme == "Dark" ? "#111111" : "#FFFFFF";
-        var codeBg = Theme == "Dark" ? "#1e1e1e" : "#f5f5f5";
-        var border = Theme == "Dark" ? "#333333" : "#e0e0e0";
+        // Preview: always white "paper" background for readability in dark mode
+        var bg = "#FFFFFF";
+        var codeBg = "#f5f5f5";
+        var border = "#e0e0e0";
         var hColor = textColor; // could choose different shade
 
         if (!forExport)
@@ -283,8 +302,8 @@ body {{
   font-family: {fontStack};
   font-size: {FontSize}pt;
   line-height: 1.6;
-  padding: 16px;
-  margin: {MarginTop}cm {MarginRight}cm {MarginBottom}cm {MarginLeft}cm;
+  padding: {MarginTop}cm {MarginRight}cm {MarginBottom}cm {MarginLeft}cm;
+  margin: 0;
 }}
 .section {{
   max-width: 900px;
@@ -307,7 +326,7 @@ blockquote {{
   border-left: 4px solid {border};
   margin: 1em 0;
   padding: 0.2em 1em;
-  color: {(Theme=="Dark"?"#cccccc":"#555555")};
+  color: #555555;
 }}
 code {{
   background: {codeBg};

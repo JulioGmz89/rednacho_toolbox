@@ -12,7 +12,7 @@ namespace RedNachoToolbox.Converters
         public double Min { get; set; } = 0d;
         public double Max { get; set; } = 1000d;
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is double d)
             {
@@ -24,7 +24,7 @@ namespace RedNachoToolbox.Converters
             return "0";
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             try
             {

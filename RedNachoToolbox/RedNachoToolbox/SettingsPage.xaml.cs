@@ -1,6 +1,8 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox;
 
@@ -63,7 +65,7 @@ public partial class SettingsPage : ContentPage
                     Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
                     _themeChangeSubscribed = true;
                 }
-                Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
+                WeakReferenceMessenger.Default.Send(new ThemeChangedMessage(IsDarkTheme));
             }
         }
         catch (Exception ex)
@@ -87,7 +89,7 @@ public partial class SettingsPage : ContentPage
             Application.Current!.MainPage?.ForceLayout();
             IsDarkTheme = isDark;
             UpdateCloseButtonImage(_closeButtonState);
-            Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
+            WeakReferenceMessenger.Default.Send(new ThemeChangedMessage(IsDarkTheme));
         }
         catch (Exception ex)
         {
@@ -512,7 +514,7 @@ public partial class SettingsPage : ContentPage
                 Application.Current.UserAppTheme = isDarkTheme ? AppTheme.Dark : AppTheme.Light;
                 Application.Current.MainPage?.ForceLayout();
                 // Notify views to refresh theme-dependent templates
-                Microsoft.Maui.Controls.MessagingCenter.Send(this, "ThemeChanged");
+                WeakReferenceMessenger.Default.Send(new ThemeChangedMessage(IsDarkTheme));
             }
             catch (Exception colorEx)
             {
@@ -911,8 +913,12 @@ public partial class SettingsPage : ContentPage
                 "TextColor", "TextColorSecondary", "TextColorTertiary", "HighlightColor",
                 "PrimaryRed", "InteractivePrimaryColor", "InteractiveSecondaryColor", "BorderInteractiveColor");
             // Also set UserAppTheme: Unspecified for System mode, else Light/Dark
-            Application.Current.UserAppTheme = (mode == "System") ? AppTheme.Unspecified : (isDarkTheme ? AppTheme.Dark : AppTheme.Light);
-            Application.Current.MainPage?.ForceLayout();
+            var app = Application.Current;
+            if (app != null)
+            {
+                app.UserAppTheme = (mode == "System") ? AppTheme.Unspecified : (isDarkTheme ? AppTheme.Dark : AppTheme.Light);
+                app.MainPage?.ForceLayout();
+            }
 
             System.Diagnostics.Debug.WriteLine($"✓ Saved theme applied successfully: {(isDarkTheme ? "Dark" : "Light")}");
             System.Diagnostics.Debug.WriteLine("=== ApplySavedTheme END ===");

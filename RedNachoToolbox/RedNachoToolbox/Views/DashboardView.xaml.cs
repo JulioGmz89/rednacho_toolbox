@@ -1,6 +1,8 @@
 using Microsoft.Maui.Controls;
 using RedNachoToolbox.ViewModels;
 using RedNachoToolbox.Models;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox.Views;
 
@@ -23,7 +25,7 @@ public partial class DashboardView : ContentView
         // Subscribe to theme change notifications to refresh templates
         try
         {
-            MessagingCenter.Subscribe<SettingsPage>(this, "ThemeChanged", (sender) =>
+            WeakReferenceMessenger.Default.Register<ThemeChangedMessage>(this, (recipient, message) =>
             {
                 RefreshTemplates();
             });
@@ -112,7 +114,7 @@ public partial class DashboardView : ContentView
     /// </summary>
     /// <param name="sender">The sender object</param>
     /// <param name="e">The selection changed event arguments</param>
-    private async void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
@@ -126,7 +128,7 @@ public partial class DashboardView : ContentView
                 // Publish message to host the tool inside MainPage content area (keep sidebar)
                 try
                 {
-                    MessagingCenter.Send(this, "OpenTool", selectedTool);
+                    WeakReferenceMessenger.Default.Send(new OpenToolMessage(selectedTool));
                 }
                 catch (Exception msgEx)
                 {
@@ -144,7 +146,8 @@ public partial class DashboardView : ContentView
         }
         catch (Exception ex)
         {
-            // Removed error popup; keeping only debug log
+            // Log the exception to avoid unused variable warning and aid debugging
+            System.Diagnostics.Debug.WriteLine($"Error in OnToolSelectionChanged: {ex.Message}");
         }
     }
 

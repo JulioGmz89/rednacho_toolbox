@@ -4,6 +4,8 @@ using RedNachoToolbox.Views;
 using RedNachoToolbox.Models;
 using RedNachoToolbox.Tools.MarkdownToPdf;
 using System.Linq;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox;
 
@@ -14,6 +16,17 @@ public partial class MainPage : ContentPage
     /// </summary>
     public MainViewModel ViewModel { get; private set; }
 
+    // Cached content views to avoid re-creating and measuring on every navigation
+    private DashboardView? _dashboardView;
+    private ProductivityView? _productivityView;
+    private MarkdownToPdfView? _markdownToPdfView;
+
+    // Prevent overlapping navigation actions that can cause flicker
+    private bool _navBusy;
+
+    // Debounce for search text changes
+    private System.Threading.CancellationTokenSource? _searchCts;
+
     public MainPage()
     {
         InitializeComponent();
@@ -22,17 +35,20 @@ public partial class MainPage : ContentPage
         ViewModel = new MainViewModel();
         BindingContext = ViewModel;
         
-        // Initialize main content with Dashboard
-        MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
+        // Initialize and cache main content views (lazy for Productivity)
+        _dashboardView = new DashboardView { BindingContext = ViewModel };
+        MainContentHost.Content = _dashboardView;
         
         // React to sidebar collapse/expand to keep parent active only when collapsed
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         
-        // Subscribe to tool open messages from views
+        // Subscribe to tool open messages from views via WeakReferenceMessenger
         try
         {
-            MessagingCenter.Subscribe<DashboardView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
-            MessagingCenter.Subscribe<ProductivityView, ToolInfo>(this, "OpenTool", (sender, tool) => ShowTool(tool));
+            WeakReferenceMessenger.Default.Register<OpenToolMessage>(this, (recipient, message) =>
+            {
+                ShowTool(message.Value);
+            });
         }
         catch (Exception ex)
         {
@@ -68,7 +84,8 @@ public partial class MainPage : ContentPage
             ContentView? view = null;
             if (tool.TargetType == typeof(MarkdownToPdfView) || tool.Name.Contains("Markdown", StringComparison.OrdinalIgnoreCase))
             {
-                view = new MarkdownToPdfView();
+                // Cache heavy WebView-based view to avoid re-initialization
+                view = _markdownToPdfView ??= new MarkdownToPdfView();
             }
 
             if (view != null)
@@ -198,10 +215,27 @@ public partial class MainPage : ContentPage
     private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
     {
         var searchText = e.NewTextValue?.Trim() ?? string.Empty;
-        
-        // Update the ViewModel's search text for real-time filtering
-        ViewModel.SearchText = searchText;
-        System.Diagnostics.Debug.WriteLine($"Search text changed: {searchText}");
+        // Debounce to avoid filtering on every keystroke
+        _searchCts?.Cancel();
+        _searchCts = new System.Threading.CancellationTokenSource();
+        var token = _searchCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(250, token);
+                await Dispatcher.DispatchAsync(() =>
+                {
+                    ViewModel.SearchText = searchText;
+                    System.Diagnostics.Debug.WriteLine($"Search text debounced -> {searchText}");
+                });
+            }
+            catch (TaskCanceledException) { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Debounced search error: {ex.Message}");
+            }
+        });
     }
 
     #endregion
@@ -317,40 +351,20 @@ public partial class MainPage : ContentPage
         try
         {
             System.Diagnostics.Debug.WriteLine("OnDashboardClicked - Event handler called");
+            if (_navBusy)
+            {
+                if (sender is Frame f1) _ = PressFeedbackAsync(f1);
+                return;
+            }
+            if (ViewModel.IsDashboardActive)
+            {
+                if (sender is Frame f2) _ = PressFeedbackAsync(f2);
+                return;
+            }
+            _navBusy = true;
             
             // Enhanced visual feedback for Frame-based button with theme-aware colors
-            if (sender is Frame frame)
-            {
-                System.Diagnostics.Debug.WriteLine("OnDashboardClicked - Frame found, applying visual states");
-                
-                // Pressed state - theme-aware pressed color
-                var pressedColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#404040") // Darker gray for dark theme
-                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
-                
-                frame.BackgroundColor = pressedColor;
-                frame.Opacity = 0.9;
-                System.Diagnostics.Debug.WriteLine($"OnDashboardClicked - Applied pressed state ({pressedColor})");
-                await Task.Delay(150); // Quick pressed feedback
-                
-                // Return to hover state briefly
-                var hoverColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
-                    : Color.FromArgb("#F5F5F5"); // Light gray for light theme
-                
-                frame.BackgroundColor = hoverColor;
-                frame.Opacity = 1.0;
-                System.Diagnostics.Debug.WriteLine($"OnDashboardClicked - Returned to hover state ({hoverColor})");
-                await Task.Delay(100); // Brief hover feedback
-                
-                // Return to normal
-                frame.BackgroundColor = Colors.Transparent;
-                System.Diagnostics.Debug.WriteLine("OnDashboardClicked - Returned to normal state");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("OnDashboardClicked - Sender is not a Frame!");
-            }
+            if (sender is Frame frame) _ = PressFeedbackAsync(frame);
             
             // Animate previous active indicators to deactivate (if any)
             if (ViewModel.IsProductivityActive)
@@ -367,9 +381,8 @@ public partial class MainPage : ContentPage
             ViewModel.SetActivePage("Dashboard");
             
             // Animate new active indicators (both expanded capsule and collapsed dot)
-            var capsuleTask = AnimateIndicatorTransition(DashboardIndicatorCapsule, true);
-            var dotTask = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, true);
-            await Task.WhenAll(capsuleTask, dotTask);
+            _ = AnimateIndicatorTransition(DashboardIndicatorCapsule, true);
+            _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, true);
             
             // Update active button backgrounds
             UpdateActiveButtonBackgrounds();
@@ -379,12 +392,18 @@ public partial class MainPage : ContentPage
             System.Diagnostics.Debug.WriteLine("Dashboard view activated - filters cleared, set as active page");
             
             // Swap main content to Dashboard view
-            MainContentHost.Content = new DashboardView { BindingContext = ViewModel };
+            if (_dashboardView == null)
+                _dashboardView = new DashboardView { BindingContext = ViewModel };
+            MainContentHost.Content = _dashboardView;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Dashboard navigation error: {ex.Message}");
             await DisplayAlert("Error", "Could not access Dashboard.", "OK");
+        }
+        finally
+        {
+            _navBusy = false;
         }
     }
 
@@ -393,40 +412,20 @@ public partial class MainPage : ContentPage
         try
         {
             System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Event handler called");
+            if (_navBusy)
+            {
+                if (sender is Frame f1) _ = PressFeedbackAsync(f1);
+                return;
+            }
+            if (ViewModel.IsProductivityActive)
+            {
+                if (sender is Frame f2) _ = PressFeedbackAsync(f2);
+                return;
+            }
+            _navBusy = true;
             
             // Enhanced visual feedback for Frame-based button with theme-aware colors
-            if (sender is Frame frame)
-            {
-                System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Frame found, applying visual states");
-                
-                // Pressed state - theme-aware pressed color
-                var pressedColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#404040") // Darker gray for dark theme
-                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
-                
-                frame.BackgroundColor = pressedColor;
-                frame.Opacity = 0.9;
-                System.Diagnostics.Debug.WriteLine($"OnProductivityClicked - Applied pressed state ({pressedColor})");
-                await Task.Delay(150); // Quick pressed feedback
-                
-                // Return to hover state briefly
-                var hoverColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
-                    : Color.FromArgb("#F5F5F5"); // Light gray for light theme
-                
-                frame.BackgroundColor = hoverColor;
-                frame.Opacity = 1.0;
-                System.Diagnostics.Debug.WriteLine($"OnProductivityClicked - Returned to hover state ({hoverColor})");
-                await Task.Delay(100); // Brief hover feedback
-                
-                // Return to normal
-                frame.BackgroundColor = Colors.Transparent;
-                System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Returned to normal state");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("OnProductivityClicked - Sender is not a Frame!");
-            }
+            if (sender is Frame frame) _ = PressFeedbackAsync(frame);
             
             // Animate previous active indicators to deactivate (if any)
             if (ViewModel.IsDashboardActive)
@@ -443,9 +442,8 @@ public partial class MainPage : ContentPage
             ViewModel.SetActivePage("Productivity");
             
             // Animate new active indicators (both expanded capsule and collapsed dot)
-            var capsuleTask = AnimateIndicatorTransition(ProductivityIndicatorCapsule, true);
-            var dotTask = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, true);
-            await Task.WhenAll(capsuleTask, dotTask);
+            _ = AnimateIndicatorTransition(ProductivityIndicatorCapsule, true);
+            _ = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, true);
             
             // Update active button backgrounds
             UpdateActiveButtonBackgrounds();
@@ -453,7 +451,9 @@ public partial class MainPage : ContentPage
             // Swap main content to Productivity view (lists only Productivity tools)
             // Ensure category is set to Productivity before hosting the view
             ViewModel.SelectedCategory = ToolCategory.Productivity;
-            MainContentHost.Content = new ProductivityView { BindingContext = ViewModel };
+            if (_productivityView == null)
+                _productivityView = new ProductivityView { BindingContext = ViewModel };
+            MainContentHost.Content = _productivityView;
             
             System.Diagnostics.Debug.WriteLine("Productivity view selected - set as active page and filtered by Productivity");
         }
@@ -461,6 +461,10 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"Productivity navigation error: {ex.Message}");
             await DisplayAlert("Error", "Could not access Productivity.", "OK");
+        }
+        finally
+        {
+            _navBusy = false;
         }
     }
 
@@ -535,29 +539,12 @@ public partial class MainPage : ContentPage
     }
 
     // Handle taps on individual Productivity tools inside the expanded sidebar list
-    private async void OnProductivitySidebarToolTapped(object sender, EventArgs e)
+    private void OnProductivitySidebarToolTapped(object sender, EventArgs e)
     {
         try
         {
             // Apply pressed visual feedback similar to other sidebar buttons
-            if (sender is Frame frame)
-            {
-                var pressedColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#404040") // Darker gray for dark theme
-                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
-                frame.BackgroundColor = pressedColor;
-                frame.Opacity = 0.9;
-                await Task.Delay(150);
-
-                var hoverColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#2A2A2A")
-                    : Color.FromArgb("#F5F5F5");
-                frame.BackgroundColor = hoverColor;
-                frame.Opacity = 1.0;
-                await Task.Delay(100);
-                // Return to normal; active state is indicated only by the red capsule
-                frame.BackgroundColor = Colors.Transparent;
-            }
+            if (sender is Frame frame) _ = PressFeedbackAsync(frame);
 
             if (sender is Element el && el.BindingContext is ToolInfo tool)
             {
@@ -582,7 +569,7 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine($"Opened tool from Productivity sidebar list: {tool.Name}");
 
                 // Ensure parent remains active (for collapsed state indicators)
-                if (ViewModel.ActivePage != "Productivity")
+                if (ViewModel != null && ViewModel.ActivePage != "Productivity")
                 {
                     // Deactivate Dashboard indicators if needed
                     if (ViewModel.IsDashboardActive)
@@ -631,38 +618,7 @@ public partial class MainPage : ContentPage
             System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Event handler called");
             
             // Enhanced visual feedback for Frame-based button with theme-aware colors
-            if (sender is Frame frame)
-            {
-                System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Frame found, applying visual states");
-                
-                // Pressed state - theme-aware pressed color
-                var pressedColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#404040") // Darker gray for dark theme
-                    : Color.FromArgb("#E0E0E0"); // Light gray for light theme
-                
-                frame.BackgroundColor = pressedColor;
-                frame.Opacity = 0.9;
-                System.Diagnostics.Debug.WriteLine($"OnSettingsClicked - Applied pressed state ({pressedColor})");
-                await Task.Delay(150); // Quick pressed feedback
-                
-                // Return to hover state briefly
-                var hoverColor = ViewModel.IsDarkTheme 
-                    ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
-                    : Color.FromArgb("#F5F5F5"); // Light gray for light theme
-                
-                frame.BackgroundColor = hoverColor;
-                frame.Opacity = 1.0;
-                System.Diagnostics.Debug.WriteLine($"OnSettingsClicked - Returned to hover state ({hoverColor})");
-                await Task.Delay(100); // Brief hover feedback
-                
-                // Return to normal
-                frame.BackgroundColor = Colors.Transparent;
-                System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Returned to normal state");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Sender is not a Frame!");
-            }
+            if (sender is Frame frame) _ = PressFeedbackAsync(frame);
             
             // Note: Settings doesn't change active page state since it navigates to separate view
             // The previous active page (Dashboard/Documentation) should remain active when returning
@@ -716,6 +672,43 @@ public partial class MainPage : ContentPage
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Lightweight, non-blocking press feedback for sidebar frames.
+    /// Runs asynchronously and does not block navigation logic.
+    /// </summary>
+    private async Task PressFeedbackAsync(Frame frame)
+    {
+        try
+        {
+            var pressedColor = ViewModel.IsDarkTheme
+                ? Color.FromArgb("#404040")
+                : Color.FromArgb("#E0E0E0");
+            var hoverColor = ViewModel.IsDarkTheme
+                ? Color.FromArgb("#2A2A2A")
+                : Color.FromArgb("#F5F5F5");
+
+            frame.BackgroundColor = pressedColor;
+            frame.Opacity = 0.9;
+            await Task.Delay(120);
+
+            frame.BackgroundColor = hoverColor;
+            frame.Opacity = 1.0;
+            await Task.Delay(80);
+
+            // If button becomes active, UpdateActiveButtonBackgrounds will set final color.
+            // Otherwise, return to transparent.
+            if (!(ReferenceEquals(frame, DashboardButtonFrame) && ViewModel.IsDashboardActive)
+                && !(ReferenceEquals(frame, ProductivityButtonFrame) && ViewModel.IsProductivityActive))
+            {
+                frame.BackgroundColor = Colors.Transparent;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"PressFeedbackAsync error: {ex.Message}");
+        }
+    }
 
     /// <summary>
     /// Updates the active background colors for all buttons based on current active page
@@ -792,7 +785,7 @@ public partial class MainPage : ContentPage
                 tools[index].IsActive = true;
 
                 // Try to update the visuals for the corresponding item
-                await Dispatcher.DispatchAsync(async () =>
+                _ = Dispatcher.DispatchAsync(async () =>
                 {
                     try
                     {
@@ -878,68 +871,17 @@ public partial class MainPage : ContentPage
 
         try
         {
-            const uint animationDuration = 250; // milliseconds - slightly faster than capsule
-            const double smallDotSize = 2.0; // Very small starting size
-            const double fullDotSize = 8.0; // Current full size
+            const uint animationDuration = 150; // faster, smoother
 
             if (isActivating)
             {
-                // Animation from small dot to full size
-                targetDot.WidthRequest = smallDotSize;
-                targetDot.HeightRequest = smallDotSize;
+                targetDot.Opacity = 0;
                 targetDot.IsVisible = true;
-
-                // Create custom animation for width
-                var widthAnimation = new Animation(
-                    v => targetDot.WidthRequest = v,
-                    smallDotSize,
-                    fullDotSize,
-                    Easing.CubicOut
-                );
-
-                // Create custom animation for height
-                var heightAnimation = new Animation(
-                    v => targetDot.HeightRequest = v,
-                    smallDotSize,
-                    fullDotSize,
-                    Easing.CubicOut
-                );
-
-                // Combine animations
-                var parentAnimation = new Animation();
-                parentAnimation.Add(0, 1, widthAnimation);
-                parentAnimation.Add(0, 1, heightAnimation);
-
-                // Start animation
-                parentAnimation.Commit(targetDot, "DotActivation", length: animationDuration);
-                await Task.Delay((int)animationDuration);
+                await targetDot.FadeTo(1, animationDuration, Easing.CubicOut);
             }
             else
             {
-                // Animation from full size to small dot, then hide
-                var widthAnimation = new Animation(
-                    v => targetDot.WidthRequest = v,
-                    fullDotSize,
-                    smallDotSize,
-                    Easing.CubicIn
-                );
-
-                var heightAnimation = new Animation(
-                    v => targetDot.HeightRequest = v,
-                    fullDotSize,
-                    smallDotSize,
-                    Easing.CubicIn
-                );
-
-                // Combine animations
-                var parentAnimation = new Animation();
-                parentAnimation.Add(0, 1, widthAnimation);
-                parentAnimation.Add(0, 1, heightAnimation);
-
-                // Start animation
-                parentAnimation.Commit(targetDot, "DotDeactivation", length: animationDuration);
-                await Task.Delay((int)animationDuration);
-                
+                await targetDot.FadeTo(0, animationDuration, Easing.CubicIn);
                 targetDot.IsVisible = false;
             }
 
@@ -962,68 +904,17 @@ public partial class MainPage : ContentPage
 
         try
         {
-            const uint animationDuration = 300; // milliseconds
-            const double dotSize = 4.0;
-            const double capsuleHeight = 20.0;
+            const uint animationDuration = 180; // faster fade for responsiveness
 
             if (isActivating)
             {
-                // Animation from dot to capsule: start as dot, grow to capsule
-                targetIndicator.HeightRequest = dotSize;
-                targetIndicator.WidthRequest = dotSize;
+                targetIndicator.Opacity = 0;
                 targetIndicator.IsVisible = true;
-
-                // Create custom animation for height
-                var heightAnimation = new Animation(
-                    v => targetIndicator.HeightRequest = v,
-                    dotSize,
-                    capsuleHeight,
-                    Easing.CubicOut
-                );
-
-                // Create custom animation for width (stays same)
-                var widthAnimation = new Animation(
-                    v => targetIndicator.WidthRequest = v,
-                    dotSize,
-                    dotSize,
-                    Easing.CubicOut
-                );
-
-                // Combine animations
-                var parentAnimation = new Animation();
-                parentAnimation.Add(0, 1, heightAnimation);
-                parentAnimation.Add(0, 1, widthAnimation);
-
-                // Start animation
-                parentAnimation.Commit(targetIndicator, "CapsuleActivation", length: animationDuration);
-                await Task.Delay((int)animationDuration);
+                await targetIndicator.FadeTo(1, animationDuration, Easing.CubicOut);
             }
             else
             {
-                // Animation from capsule to dot: shrink to dot, then hide
-                var heightAnimation = new Animation(
-                    v => targetIndicator.HeightRequest = v,
-                    capsuleHeight,
-                    dotSize,
-                    Easing.CubicIn
-                );
-
-                var widthAnimation = new Animation(
-                    v => targetIndicator.WidthRequest = v,
-                    dotSize,
-                    dotSize,
-                    Easing.CubicIn
-                );
-
-                // Combine animations
-                var parentAnimation = new Animation();
-                parentAnimation.Add(0, 1, heightAnimation);
-                parentAnimation.Add(0, 1, widthAnimation);
-
-                // Start animation
-                parentAnimation.Commit(targetIndicator, "CapsuleDeactivation", length: animationDuration);
-                await Task.Delay((int)animationDuration);
-                
+                await targetIndicator.FadeTo(0, animationDuration, Easing.CubicIn);
                 targetIndicator.IsVisible = false;
             }
 

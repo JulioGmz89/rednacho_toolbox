@@ -1,5 +1,7 @@
 using RedNachoToolbox.ViewModels;
 using RedNachoToolbox.Models;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox.Views;
 
@@ -41,7 +43,7 @@ public partial class ProductivityView : ContentView
         System.Diagnostics.Debug.WriteLine($"Search text changed: '{e.OldTextValue}' -> '{e.NewTextValue}'");
     }
 
-    private async void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
@@ -51,7 +53,7 @@ public partial class ProductivityView : ContentView
                 ViewModel?.AddToRecentlyUsed(selectedTool);
                 try
                 {
-                    MessagingCenter.Send(this, "OpenTool", selectedTool);
+                    WeakReferenceMessenger.Default.Send(new OpenToolMessage(selectedTool));
                 }
                 catch (Exception msgEx)
                 {

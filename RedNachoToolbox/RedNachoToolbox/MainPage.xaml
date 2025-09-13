@@ -4,9 +4,13 @@
              xmlns:views="clr-namespace:RedNachoToolbox.Views"
              xmlns:viewmodels="clr-namespace:RedNachoToolbox.ViewModels"
              xmlns:models="clr-namespace:RedNachoToolbox.Models"
+             xmlns:controls="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
              x:Class="RedNachoToolbox.MainPage"
              x:Name="MainPageRoot"
-             x:DataType="viewmodels:MainViewModel">
+             x:DataType="viewmodels:MainViewModel"
+             Title=""
+             Shell.BackgroundColor="{DynamicResource SidebarBackgroundColor}"
+             Shell.NavBarHasShadow="False">
 
     <ContentPage.Resources>
         <!-- Interactive Button Frame Style with Hover and Active States -->
@@ -25,7 +29,7 @@
             <Setter Property="Opacity" Value="0.1" />
         </Style>
     </ContentPage.Resources>
-
+    
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="{Binding IsSidebarCollapsed, Converter={StaticResource BoolToWidthConverter}}" />
@@ -112,11 +116,8 @@
                                     <Image WidthRequest="18"
                                            HeightRequest="18"
                                            VerticalOptions="Center"
-                                           HorizontalOptions="Center">
-                                        <Image.Source>
-                                            <AppThemeBinding Light="rocket_light.png" Dark="rocket_dark.png" />
-                                        </Image.Source>
-                                    </Image>
+                                           HorizontalOptions="Center"
+                                           Source="{AppThemeBinding Light=rocket_light.png, Dark=rocket_dark.png}" />
                                 </Frame>
                                 
                                 <!-- Active Page Indicator - Collapsed Dot -->
@@ -223,11 +224,8 @@
                                     <Image Grid.Column="1"
                                            WidthRequest="20"
                                            HeightRequest="20"
-                                           VerticalOptions="Center">
-                                        <Image.Source>
-                                            <AppThemeBinding Light="rocket_light.png" Dark="rocket_dark.png" />
-                                        </Image.Source>
-                                    </Image>
+                                           VerticalOptions="Center"
+                                           Source="{AppThemeBinding Light=rocket_light.png, Dark=rocket_dark.png}" />
                                     <Label Grid.Column="2"
                                            Text="Productivity"
                                            TextColor="{DynamicResource TextColor}"
@@ -247,11 +245,8 @@
                                                WidthRequest="12"
                                                HeightRequest="12"
                                                VerticalOptions="Center"
-                                               HorizontalOptions="End">
-                                            <Image.Source>
-                                                <AppThemeBinding Light="chevron_light.png" Dark="chevron_dark.png" />
-                                            </Image.Source>
-                                        </Image>
+                                               HorizontalOptions="End"
+                                               Source="{AppThemeBinding Light=chevron_light.png, Dark=chevron_dark.png}" />
                                     </Grid>
                                 </Grid>
                             </Frame>
@@ -261,7 +256,7 @@
                                                  Margin="36,0,0,0"
                                                  Spacing="4"
                                                  IsVisible="{Binding IsProductivityExpanded}">
-                                <VerticalStackLayout.BindableLayout.ItemTemplate>
+                                <controls:BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="models:ToolInfo">
                                         <Frame Style="{StaticResource InteractiveButtonFrame}" HeightRequest="48">
                                             <Frame.GestureRecognizers>
@@ -313,10 +308,10 @@
                                             </Grid>
                                         </Frame>
                                     </DataTemplate>
-                                </VerticalStackLayout.BindableLayout.ItemTemplate>
-                                <VerticalStackLayout.BindableLayout.ItemsSource>
+                                </controls:BindableLayout.ItemTemplate>
+                                <controls:BindableLayout.ItemsSource>
                                     <Binding Path="ProductivityTools" />
-                                </VerticalStackLayout.BindableLayout.ItemsSource>
+                                </controls:BindableLayout.ItemsSource>
                             </VerticalStackLayout>
                             
                         </VerticalStackLayout>

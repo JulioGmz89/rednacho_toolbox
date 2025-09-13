@@ -95,23 +95,32 @@ public partial class MarkdownToPdfView : ContentView
                 var exportHtml = ViewModel.GetExportHtml();
                 if (PreviewWebView?.Handler?.PlatformView is WebView2 native)
                 {
-                    if (native.CoreWebView2 == null)
+                    var core = native.CoreWebView2;
+                    if (core == null)
                     {
                         await native.EnsureCoreWebView2Async();
+                        core = native.CoreWebView2;
+                    }
+
+                    if (core == null)
+                    {
+                        throw new InvalidOperationException("WebView2 core not initialized");
                     }
 
                     native.NavigateToString(exportHtml);
                     await WaitForDocumentCompleteAsync(native);
 
                     string tempPath = Path.Combine(FileSystem.CacheDirectory, $"Markdown_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
-                    var printSettings = native.CoreWebView2.Environment.CreatePrintSettings();
+                    var printSettings = core.Environment.CreatePrintSettings();
                     // Honor @page via default margins; background enabled to keep styles closer to preview
                     printSettings.ShouldPrintBackgrounds = true;
-                    await native.CoreWebView2.PrintToPdfAsync(tempPath, printSettings);
+                    await core.PrintToPdfAsync(tempPath, printSettings);
 
                     // Guardar donde el usuario elija
                     await using var read = File.OpenRead(tempPath);
+                    #pragma warning disable CA1416
                     var saveResult = await FileSaver.Default.SaveAsync(Path.GetFileName(tempPath), read, CancellationToken.None);
+                    #pragma warning restore CA1416
                     if (!saveResult.IsSuccessful)
                     {
                         await Application.Current!.MainPage!.DisplayAlert("Error", saveResult.Exception?.Message ?? "No se pudo guardar el archivo.", "OK");
@@ -150,7 +159,9 @@ public partial class MarkdownToPdfView : ContentView
 
                 var fileName = $"Markdown_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 using var stream = new MemoryStream(pdfBytes);
+                #pragma warning disable CA1416
                 var saveResult = await FileSaver.Default.SaveAsync(fileName, stream, CancellationToken.None);
+                #pragma warning restore CA1416
 
                 if (!saveResult.IsSuccessful)
                 {

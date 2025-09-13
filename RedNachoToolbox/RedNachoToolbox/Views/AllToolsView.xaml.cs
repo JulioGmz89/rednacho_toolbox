@@ -1,5 +1,7 @@
 using RedNachoToolbox.ViewModels;
 using RedNachoToolbox.Models;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox.Views;
 
@@ -74,7 +76,7 @@ public partial class AllToolsView : ContentView
     /// </summary>
     /// <param name="sender">The CollectionView that triggered the event</param>
     /// <param name="e">Selection changed event arguments</param>
-    private async void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnToolSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
@@ -87,7 +89,7 @@ public partial class AllToolsView : ContentView
                 // Publish message so MainPage hosts the tool within the content area (keeping sidebar)
                 try
                 {
-                    MessagingCenter.Send(this, "OpenTool", selectedTool);
+                    WeakReferenceMessenger.Default.Send(new OpenToolMessage(selectedTool));
                 }
                 catch (Exception msgEx)
                 {
