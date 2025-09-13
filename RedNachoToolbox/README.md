@@ -118,7 +118,3 @@ dotnet publish -f net8.0-maccatalyst -c Release
 - Keep UI feedback lightweight and non‑blocking
 - Open an issue or PR with a clear description and reproduction steps
 
-
-## 🪪 License
-
-Specify your license of choice here (e.g., MIT). If absent, this project remains All Rights Reserved by the owner.
