@@ -2,6 +2,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using CommunityToolkit.Maui;
+using RedNachoToolbox.Services; // added
+using RedNachoToolbox.ViewModels; // added
+using RedNachoToolbox.Tools.MarkdownToPdf; // future tool registrations
 #if WINDOWS
 using Microsoft.UI.Xaml.Controls;
 #endif
@@ -45,6 +48,12 @@ public static class MauiProgram
                 fonts.AddFont("Inter/Inter_18pt-ThinItalic.ttf", "InterThinItalic");
             });
 
+        // Registro de servicios (DI)
+        builder.Services.AddSingleton<IToolRegistry, ToolRegistry>();
+        builder.Services.AddSingleton<MainViewModel>();
+        builder.Services.AddTransient<MainPage>();
+        // Futuro: builder.Services.AddSingleton<IThemeService, ThemeService>();
+
         // Hide native On/Off text beside Switch on Windows (ToggleSwitch OnContent/OffContent)
         SwitchHandler.Mapper.AppendToMapping("HideWinSwitchLabels", (handler, view) =>
         {
@@ -61,6 +70,9 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+        // Inicializa helper estático para resolver servicios desde páginas sin constructor DI
+        ServiceHelper.Services = app.Services;
+        return app;
     }
 }

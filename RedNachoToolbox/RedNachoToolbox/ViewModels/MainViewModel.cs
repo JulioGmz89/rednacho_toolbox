@@ -1,458 +1,225 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using RedNachoToolbox.Models;
-using RedNachoToolbox.Tools.MarkdownToPdf;
+using RedNachoToolbox.Services;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using RedNachoToolbox.Messaging;
 
 namespace RedNachoToolbox.ViewModels;
 
 /// <summary>
-/// Main ViewModel for the Red Nacho ToolBox application.
-/// Manages the collection of tools and handles the main application logic.
+/// Main ViewModel para la aplicación. Centraliza estado de navegación, filtros y herramientas.
+/// Ahora se alimenta desde IToolRegistry y expone RelayCommands para reducir lógica en code-behind.
 /// </summary>
-public class MainViewModel : BaseViewModel
+public partial class MainViewModel : BaseViewModel
 {
-    private ObservableCollection<ToolInfo> _tools;
-    private ObservableCollection<ToolInfo> _filteredTools;
-    private ObservableCollection<ToolInfo> _recentlyUsedTools;
+    private readonly IToolRegistry _toolRegistry;
+
+    private ObservableCollection<ToolInfo> _tools = new();
+    private ObservableCollection<ToolInfo> _filteredTools = new();
+    private ObservableCollection<ToolInfo> _recentlyUsedTools = new();
     private string _searchText = string.Empty;
     private ToolCategory? _selectedCategory;
     private ToolInfo? _selectedTool;
     private bool _isSidebarCollapsed;
     private bool _isDarkTheme;
     private bool _isProductivityExpanded;
-    private string _activePage = "Dashboard"; // Default to Dashboard as active
+    private string _activePage = "Dashboard";
 
-    /// <summary>
-    /// Initializes a new instance of the MainViewModel class.
-    /// </summary>
-    public MainViewModel()
+    public MainViewModel(IToolRegistry toolRegistry)
     {
+        _toolRegistry = toolRegistry ?? throw new ArgumentNullException(nameof(toolRegistry));
         Title = "Red Nacho ToolBox";
-        _tools = new ObservableCollection<ToolInfo>();
-        _filteredTools = new ObservableCollection<ToolInfo>();
-        _recentlyUsedTools = new ObservableCollection<ToolInfo>();
-        
-        // Initialize sidebar and theme state from preferences
         LoadPreferences();
-        
-        // Initialize with sample data
-        LoadSampleTools();
-        
-        // Initialize recently used tools with sample data
+        InitializeToolsFromRegistry();
         LoadRecentlyUsedTools();
     }
 
-    /// <summary>
-    /// Gets the collection of all available tools.
-    /// </summary>
+    #region Colecciones
     public ObservableCollection<ToolInfo> Tools
     {
-        get => _tools;
-        private set => SetProperty(ref _tools, value);
+        get => _tools; private set => SetProperty(ref _tools, value);
     }
-
-    /// <summary>
-    /// Gets the filtered collection of tools based on search and category filters.
-    /// </summary>
     public ObservableCollection<ToolInfo> FilteredTools
     {
-        get => _filteredTools;
-        private set => SetProperty(ref _filteredTools, value);
+        get => _filteredTools; private set => SetProperty(ref _filteredTools, value);
     }
-
-    /// <summary>
-    /// Gets the collection of recently used tools (maximum 3 items).
-    /// </summary>
     public ObservableCollection<ToolInfo> RecentlyUsedTools
     {
-        get => _recentlyUsedTools;
-        private set => SetProperty(ref _recentlyUsedTools, value);
+        get => _recentlyUsedTools; private set => SetProperty(ref _recentlyUsedTools, value);
     }
+    #endregion
 
-    /// <summary>
-    /// Gets or sets the current search text for filtering tools.
-    /// </summary>
+    #region Propiedades de filtro / estado
     public string SearchText
     {
         get => _searchText;
-        set
-        {
-            if (SetProperty(ref _searchText, value))
-            {
-                ApplyFilters();
-                OnPropertyChanged(nameof(HasActiveFilters));
-            }
-        }
+        set { if (SetProperty(ref _searchText, value)) { ApplyFilters(); OnPropertyChanged(nameof(HasActiveFilters)); } }
     }
-
-    /// <summary>
-    /// Gets or sets the selected category for filtering tools.
-    /// </summary>
     public ToolCategory? SelectedCategory
     {
         get => _selectedCategory;
-        set
-        {
-            if (SetProperty(ref _selectedCategory, value))
-            {
-                ApplyFilters();
-                OnPropertyChanged(nameof(HasActiveFilters));
-            }
-        }
+        set { if (SetProperty(ref _selectedCategory, value)) { ApplyFilters(); OnPropertyChanged(nameof(HasActiveFilters)); } }
     }
-
-    /// <summary>
-    /// Gets the total count of tools.
-    /// </summary>
-    public int ToolsCount => Tools.Count;
-
-    /// <summary>
-    /// Gets the count of filtered tools.
-    /// </summary>
-    public int FilteredToolsCount => FilteredTools.Count;
-
-    /// <summary>
-    /// Gets or sets the currently selected tool.
-    /// </summary>
-    public ToolInfo? SelectedTool
-    {
-        get => _selectedTool;
-        set => SetProperty(ref _selectedTool, value);
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether there are active filters applied.
-    /// </summary>
+    public ToolInfo? SelectedTool { get => _selectedTool; set => SetProperty(ref _selectedTool, value); }
     public bool HasActiveFilters => !string.IsNullOrWhiteSpace(SearchText) || SelectedCategory.HasValue;
-
-    /// <summary>
-    /// Gets a value indicating whether there are recently used tools to display.
-    /// </summary>
     public bool HasRecentlyUsedTools => RecentlyUsedTools.Count > 0;
 
-    /// <summary>
-    /// Gets or sets whether the sidebar is collapsed.
-    /// </summary>
     public bool IsSidebarCollapsed
     {
         get => _isSidebarCollapsed;
-        set
-        {
-            if (SetProperty(ref _isSidebarCollapsed, value))
-            {
-                OnPropertyChanged(nameof(LogoImageSource));
-            }
-        }
+        set { if (SetProperty(ref _isSidebarCollapsed, value)) OnPropertyChanged(nameof(LogoImageSource)); }
     }
-
-    /// <summary>
-    /// Gets or sets whether dark theme is currently active.
-    /// </summary>
     public bool IsDarkTheme
     {
         get => _isDarkTheme;
-        set
-        {
-            if (SetProperty(ref _isDarkTheme, value))
-            {
-                OnPropertyChanged(nameof(LogoImageSource));
-            }
-        }
+        set { if (SetProperty(ref _isDarkTheme, value)) OnPropertyChanged(nameof(LogoImageSource)); }
     }
+    public bool IsProductivityExpanded { get => _isProductivityExpanded; set => SetProperty(ref _isProductivityExpanded, value); }
 
-    /// <summary>
-    /// Gets the appropriate logo image source based on sidebar state and theme.
-    /// </summary>
-    public string LogoImageSource
-    {
-        get
-        {
-            if (IsSidebarCollapsed)
-            {
-                return "rn_toolkit_collapsed.png";
-            }
-            else
-            {
-                return IsDarkTheme ? "rn_toolkit_expanded_dark.png" : "rn_toolkit_expanded_light.png";
-            }
-        }
-    }
+    public string ActivePage { get => _activePage; set => SetProperty(ref _activePage, value); }
+    public bool IsDashboardActive => ActivePage == "Dashboard";
+    public bool IsProductivityActive => ActivePage == "Productivity";
+    public bool IsSettingsActive => false; // Settings no participa en indicador activo
 
-    /// <summary>
-    /// Gets the base name for the dashboard icon (grid_outline).
-    /// </summary>
+    public string LogoImageSource => IsSidebarCollapsed ? "rn_toolkit_collapsed.png" : (IsDarkTheme ? "rn_toolkit_expanded_dark.png" : "rn_toolkit_expanded_light.png");
     public string DashboardIconBase => "grid_outline";
-
-    /// <summary>
-    /// Gets the base name for the productivity icon (rocket).
-    /// Note: Sidebar uses AppThemeBinding for rocket_light/rocket_dark.
-    /// </summary>
     public string ProductivityIconBase => "rocket";
-
-    /// <summary>
-    /// Gets the base name for the settings icon (options_outline).
-    /// </summary>
     public string SettingsIconBase => "options_outline";
 
-    /// <summary>
-    /// Gets or sets the currently active page.
-    /// </summary>
-    public string ActivePage
-    {
-        get => _activePage;
-        set => SetProperty(ref _activePage, value);
-    }
-
-    /// <summary>
-    /// Gets whether the Dashboard page is currently active.
-    /// </summary>
-    public bool IsDashboardActive => ActivePage == "Dashboard";
-
-    /// <summary>
-    /// Gets whether the Productivity page is currently active.
-    /// </summary>
-    public bool IsProductivityActive => ActivePage == "Productivity";
-
-    /// <summary>
-    /// Gets whether the Settings page is currently active.
-    /// Note: Settings is excluded from active page indicator system since it navigates to a separate view.
-    /// </summary>
-    public bool IsSettingsActive => false; // Settings doesn't show active indicator
-
-    /// <summary>
-    /// Sets the active page and notifies all active state properties.
-    /// </summary>
-    /// <param name="pageName">The name of the page to set as active</param>
-    public void SetActivePage(string pageName)
-    {
-        ActivePage = pageName;
-        
-        // Notify all active state properties
-        OnPropertyChanged(nameof(IsDashboardActive));
-        OnPropertyChanged(nameof(IsProductivityActive));
-        OnPropertyChanged(nameof(IsSettingsActive));
-        
-        System.Diagnostics.Debug.WriteLine($"Active page changed to: {pageName}");
-    }
-
-    /// <summary>
-    /// Indicates whether the Productivity category in the sidebar is expanded.
-    /// </summary>
-    public bool IsProductivityExpanded
-    {
-        get => _isProductivityExpanded;
-        set => SetProperty(ref _isProductivityExpanded, value);
-    }
-
-    /// <summary>
-    /// Returns the list of tools in the Productivity category.
-    /// </summary>
     public IEnumerable<ToolInfo> ProductivityTools => Tools.Where(t => t.Category == ToolCategory.Productivity);
+    #endregion
 
-    /// <summary>
-    /// Loads user preferences for sidebar and theme state.
-    /// </summary>
+    #region Inicialización
+    private void InitializeToolsFromRegistry()
+    {
+        Tools.Clear();
+        foreach (var t in _toolRegistry.GetAll())
+            Tools.Add(t);
+        ApplyFilters();
+    }
     private void LoadPreferences()
     {
-        // Load sidebar preference
         _isSidebarCollapsed = Preferences.Get("IsSidebarCollapsed", false);
-        
-        // Load theme preference by checking current application resources
         _isDarkTheme = IsCurrentlyDarkTheme();
-        
-        System.Diagnostics.Debug.WriteLine($"MainViewModel loaded preferences - Sidebar: {(_isSidebarCollapsed ? "Collapsed" : "Expanded")}, Theme: {(_isDarkTheme ? "Dark" : "Light")}");
     }
+    private void LoadRecentlyUsedTools() { /* Inicialmente vacío; futura persistencia */ }
+    #endregion
 
-    /// <summary>
-    /// Determines if the current theme is dark by checking applied color values.
-    /// </summary>
+    #region Tema / Sidebar Updates externos
+    public void UpdateThemeState(bool isDarkTheme) => IsDarkTheme = isDarkTheme;
+    public void UpdateSidebarState(bool isSidebarCollapsed) => IsSidebarCollapsed = isSidebarCollapsed;
     private bool IsCurrentlyDarkTheme()
     {
         try
         {
-            var resources = Application.Current?.Resources;
-            if (resources == null) return false;
-
-            // Check the current PageBackgroundColor to determine theme
-            if (resources.TryGetValue("PageBackgroundColor", out var bgColorObj) && bgColorObj is Color bgColor)
-            {
-                // Dark theme background is very dark, light theme background is white
-                return bgColor.Red < 0.5f && bgColor.Green < 0.5f && bgColor.Blue < 0.5f;
-            }
+            var resources = Application.Current?.Resources; if (resources == null) return false;
+            if (resources.TryGetValue("PageBackgroundColor", out var bgObj) && bgObj is Color c)
+                return c.Red < 0.5f && c.Green < 0.5f && c.Blue < 0.5f;
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error detecting current theme in MainViewModel: {ex.Message}");
-        }
-        
-        return false; // Default to light theme
+        catch { }
+        return false;
     }
+    #endregion
 
-    /// <summary>
-    /// Updates the theme state (called from external sources like SettingsPage).
-    /// </summary>
-    public void UpdateThemeState(bool isDarkTheme)
-    {
-        IsDarkTheme = isDarkTheme;
-    }
-
-    /// <summary>
-    /// Updates the sidebar state (called from external sources like SettingsPage).
-    /// </summary>
-    public void UpdateSidebarState(bool isSidebarCollapsed)
-    {
-        IsSidebarCollapsed = isSidebarCollapsed;
-    }
-
-    /// <summary>
-    /// Loads only the production-ready tools. For release we hide placeholders and keep Markdown to PDF.
-    /// </summary>
-    private void LoadSampleTools()
-    {
-        Tools.Clear();
-
-        var markdownTool = new ToolInfo(
-            "Markdown to PDF",
-            "Convert Markdown to PDF with customizable styles and live preview.",
-            "md_to_pdf_lightmode_black.png",
-            ToolCategory.Productivity,
-            typeof(MarkdownToPdfView)
-        );
-
-        Tools.Add(markdownTool);
-
-        // Initially show all tools (only Markdown to PDF now)
-        ApplyFilters();
-    }
-
-    /// <summary>
-    /// Applies current search and category filters to the tools collection.
-    /// </summary>
+    #region Filtros y Colecciones
     private void ApplyFilters()
     {
         var filtered = Tools.AsEnumerable();
-
-        // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            var searchLower = SearchText.ToLowerInvariant();
-            filtered = filtered.Where(t => 
-                t.Name.ToLowerInvariant().Contains(searchLower) ||
-                t.Description.ToLowerInvariant().Contains(searchLower) ||
-                t.Category.ToString().ToLowerInvariant().Contains(searchLower));
+            var s = SearchText.ToLowerInvariant();
+            filtered = filtered.Where(t => t.Name.ToLowerInvariant().Contains(s) || t.Description.ToLowerInvariant().Contains(s) || t.Category.ToString().ToLowerInvariant().Contains(s));
         }
-
-        // Apply category filter
         if (SelectedCategory.HasValue)
-        {
             filtered = filtered.Where(t => t.Category == SelectedCategory.Value);
-        }
-
-        // Update filtered collection
         FilteredTools.Clear();
-        foreach (var tool in filtered)
-        {
-            FilteredTools.Add(tool);
-        }
-
-        // Notify count changes
+        foreach (var t in filtered) FilteredTools.Add(t);
         OnPropertyChanged(nameof(ToolsCount));
         OnPropertyChanged(nameof(FilteredToolsCount));
     }
+    public int ToolsCount => Tools.Count;
+    public int FilteredToolsCount => FilteredTools.Count;
 
-    /// <summary>
-    /// Adds a new tool to the collection.
-    /// </summary>
-    /// <param name="tool">The tool to add</param>
     public void AddTool(ToolInfo tool)
     {
-        if (tool == null)
-            throw new ArgumentNullException(nameof(tool));
-
-        Tools.Add(tool);
-        ApplyFilters();
+        if (tool == null) throw new ArgumentNullException(nameof(tool));
+        Tools.Add(tool); ApplyFilters();
     }
-
-    /// <summary>
-    /// Removes a tool from the collection.
-    /// </summary>
-    /// <param name="tool">The tool to remove</param>
-    /// <returns>True if the tool was removed, false otherwise</returns>
     public bool RemoveTool(ToolInfo tool)
     {
-        if (tool == null)
-            return false;
-
-        var removed = Tools.Remove(tool);
-        if (removed)
-        {
-            ApplyFilters();
-        }
-        return removed;
+        if (tool == null) return false;
+        var removed = Tools.Remove(tool); if (removed) ApplyFilters(); return removed;
     }
+    public void ClearFilters() { SearchText = string.Empty; SelectedCategory = null; }
+    public void RefreshTools() => ApplyFilters();
 
-    /// <summary>
-    /// Clears the search text and category filter.
-    /// </summary>
-    public void ClearFilters()
-    {
-        SearchText = string.Empty;
-        SelectedCategory = null;
-    }
-
-    /// <summary>
-    /// Refreshes the tools collection by reapplying filters.
-    /// </summary>
-    public void RefreshTools()
-    {
-        ApplyFilters();
-    }
-
-    /// <summary>
-    /// Adds a tool to the recently used tools collection.
-    /// Maintains a maximum of 3 items, with the most recent at the top.
-    /// </summary>
-    /// <param name="tool">The tool to add to recently used</param>
     public void AddToRecentlyUsed(ToolInfo tool)
     {
         if (tool == null) return;
-
-        // Remove the tool if it already exists in the list
-        var existingTool = RecentlyUsedTools.FirstOrDefault(t => t.Name == tool.Name);
-        if (existingTool != null)
-        {
-            RecentlyUsedTools.Remove(existingTool);
-        }
-
-        // Add the tool to the beginning of the list
+        var existing = RecentlyUsedTools.FirstOrDefault(t => t.Name == tool.Name);
+        if (existing != null) RecentlyUsedTools.Remove(existing);
         RecentlyUsedTools.Insert(0, tool);
-
-        // Keep only the 3 most recent tools
-        while (RecentlyUsedTools.Count > 3)
-        {
-            RecentlyUsedTools.RemoveAt(RecentlyUsedTools.Count - 1);
-        }
-
-        // Notify property change for HasRecentlyUsedTools
+        while (RecentlyUsedTools.Count > 3) RecentlyUsedTools.RemoveAt(RecentlyUsedTools.Count - 1);
         OnPropertyChanged(nameof(HasRecentlyUsedTools));
-
-        System.Diagnostics.Debug.WriteLine($"Added '{tool.Name}' to recently used tools. Total: {RecentlyUsedTools.Count}");
     }
 
-    /// <summary>
-    /// Loads sample recently used tools for demonstration purposes.
-    /// In a real application, this would load from preferences or local storage.
-    /// </summary>
-    private void LoadRecentlyUsedTools()
+    private void ClearActiveProductivityTools()
     {
-        // Add some sample recently used tools (last 3 tools from the sample data)
-        var sampleRecentTools = Tools.TakeLast(3).Reverse().ToList();
-        
-        foreach (var tool in sampleRecentTools)
-        {
-            RecentlyUsedTools.Add(tool);
-        }
-
-        System.Diagnostics.Debug.WriteLine($"Loaded {RecentlyUsedTools.Count} recently used tools");
+        foreach (var t in ProductivityTools)
+            if (t.IsActive) t.IsActive = false;
     }
+
+    private void SetActiveProductivityTool(ToolInfo tool)
+    {
+        foreach (var t in ProductivityTools)
+            t.IsActive = ReferenceEquals(t, tool);
+    }
+    #endregion
+
+    #region Active Page
+    public void SetActivePage(string pageName)
+    {
+        ActivePage = pageName;
+        OnPropertyChanged(nameof(IsDashboardActive));
+        OnPropertyChanged(nameof(IsProductivityActive));
+        OnPropertyChanged(nameof(IsSettingsActive));
+    }
+    #endregion
+
+    #region RelayCommands
+    [RelayCommand]
+    private void GoDashboard()
+    {
+        SetActivePage("Dashboard");
+        ClearFilters();
+        ClearActiveProductivityTools();
+    }
+
+    [RelayCommand]
+    private void GoProductivity()
+    {
+        SetActivePage("Productivity");
+        SelectedCategory = ToolCategory.Productivity;
+    }
+
+    [RelayCommand]
+    private void ToggleProductivityExpanded()
+    {
+        IsProductivityExpanded = !IsProductivityExpanded;
+    }
+
+    [RelayCommand]
+    private void OpenTool(ToolInfo tool)
+    {
+        if (tool == null) return;
+        AddToRecentlyUsed(tool);
+        if (tool.Category == ToolCategory.Productivity)
+        {
+            SetActivePage("Productivity");
+            SetActiveProductivityTool(tool);
+        }
+        WeakReferenceMessenger.Default.Send(new OpenToolMessage(tool));
+    }
+    #endregion
 }
