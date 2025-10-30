@@ -3,6 +3,7 @@ using Microsoft.Maui;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using RedNachoToolbox.Messaging;
+using RedNachoToolbox.Constants;
 
 namespace RedNachoToolbox;
 
@@ -805,7 +806,7 @@ public partial class SettingsPage : ContentPage
     // Legacy bool preference kept for backward compatibility but superseded by ThemeMode
     private void SaveThemePreference(bool isDarkTheme)
     {
-        try { Preferences.Set("IsDarkTheme", isDarkTheme); } catch { }
+        try { Preferences.Set(PreferenceKeys.IsDarkTheme, isDarkTheme); } catch { }
     }
 
     /// <summary>
@@ -813,7 +814,7 @@ public partial class SettingsPage : ContentPage
     /// </summary>
     public static bool LoadThemePreference()
     {
-        try { return Preferences.Get("IsDarkTheme", false); } catch { return false; }
+        try { return Preferences.Get(PreferenceKeys.IsDarkTheme, false); } catch { return false; }
     }
 
     // New: Save/Load ThemeMode preference (System default)
@@ -822,7 +823,7 @@ public partial class SettingsPage : ContentPage
         try
         {
             var normalized = (mode == "Light" || mode == "Dark") ? mode : "System";
-            Preferences.Set("ThemeMode", normalized);
+            Preferences.Set(PreferenceKeys.ThemeMode, normalized);
             System.Diagnostics.Debug.WriteLine($"Saved ThemeMode: {normalized}");
         }
         catch (Exception ex)
@@ -835,7 +836,7 @@ public partial class SettingsPage : ContentPage
     {
         try
         {
-            var mode = Preferences.Get("ThemeMode", "System");
+            var mode = Preferences.Get(PreferenceKeys.ThemeMode, "System");
             if (mode != "Light" && mode != "Dark" && mode != "System") mode = "System";
             return mode;
         }
@@ -854,7 +855,7 @@ public partial class SettingsPage : ContentPage
         try
         {
             System.Diagnostics.Debug.WriteLine($"=== SaveSidebarPreference: {(isSidebarCollapsed ? "Collapsed" : "Expanded")} ===");
-            Preferences.Set("IsSidebarCollapsed", isSidebarCollapsed);
+            Preferences.Set(PreferenceKeys.IsSidebarCollapsed, isSidebarCollapsed);
             System.Diagnostics.Debug.WriteLine($"✓ Sidebar preference saved successfully: {(isSidebarCollapsed ? "Collapsed" : "Expanded")}");
         }
         catch (Exception ex)
@@ -871,7 +872,7 @@ public partial class SettingsPage : ContentPage
     {
         try
         {
-            return Preferences.Get("IsSidebarCollapsed", false); // Default to expanded sidebar
+            return Preferences.Get(PreferenceKeys.IsSidebarCollapsed, false); // Default to expanded sidebar
         }
         catch (Exception ex)
         {
@@ -889,7 +890,7 @@ public partial class SettingsPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine("=== ApplySavedTheme START ===");
             // Respect new ThemeMode preference. Fallback to legacy bool.
-            var mode = Preferences.Get("ThemeMode", "System");
+            var mode = Preferences.Get(PreferenceKeys.ThemeMode, "System");
             bool? forcedDark = null;
             if (mode == "Light") forcedDark = false;
             else if (mode == "Dark") forcedDark = true;
