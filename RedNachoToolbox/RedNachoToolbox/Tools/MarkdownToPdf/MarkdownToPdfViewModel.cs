@@ -57,8 +57,8 @@ public class MarkdownToPdfViewModel : BaseViewModel
     }
 
     // New: Color property for UI color pickers
-    private Color _textColor = Color.FromArgb("#222222");
-    public Color TextColor
+    private Microsoft.Maui.Graphics.Color _textColor = Microsoft.Maui.Graphics.Color.FromArgb("#222222");
+    public Microsoft.Maui.Graphics.Color TextColor
     {
         get => _textColor;
         set
@@ -73,7 +73,7 @@ public class MarkdownToPdfViewModel : BaseViewModel
         }
     }
 
-    private static string ColorToHex(Color c)
+    private static string ColorToHex(Microsoft.Maui.Graphics.Color c)
     {
         // ignore alpha for CSS text color
         byte r = (byte)Math.Round(c.Red * 255);
@@ -82,7 +82,7 @@ public class MarkdownToPdfViewModel : BaseViewModel
         return $"#{r:X2}{g:X2}{b:X2}";
     }
 
-    private static Color HexToColor(string hex)
+    private static Microsoft.Maui.Graphics.Color HexToColor(string hex)
     {
         try { return Color.FromArgb(hex); } catch { return Color.FromArgb("#222222"); }
     }
