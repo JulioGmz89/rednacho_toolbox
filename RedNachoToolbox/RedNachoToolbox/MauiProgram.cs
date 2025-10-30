@@ -49,6 +49,8 @@ public static class MauiProgram
             });
 
         // Service registration (DI)
+        builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
+        builder.Services.AddSingleton<IThemeService, ThemeService>();
         builder.Services.AddSingleton<IToolRegistry, ToolRegistry>();
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddTransient<MainPage>();
@@ -63,8 +65,6 @@ public static class MauiProgram
         builder.Logging.SetMinimumLevel(LogLevel.Information);
 #endif
 
-        // Future: builder.Services.AddSingleton<IThemeService, ThemeService>();
-
         // Hide native On/Off text beside Switch on Windows (ToggleSwitch OnContent/OffContent)
         SwitchHandler.Mapper.AppendToMapping("HideWinSwitchLabels", (handler, view) =>
         {
@@ -78,8 +78,8 @@ public static class MauiProgram
         });
 
         var app = builder.Build();
-        // Initialize static helper to resolve services from pages without constructor DI
-        ServiceHelper.Services = app.Services;
-     return app;
+     // Initialize static helper to resolve services from pages without constructor DI
+   ServiceHelper.Services = app.Services;
+        return app;
     }
 }
