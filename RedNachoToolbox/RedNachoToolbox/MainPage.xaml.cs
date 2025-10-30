@@ -6,6 +6,7 @@ using RedNachoToolbox.Tools.MarkdownToPdf;
 using System.Linq;
 using CommunityToolkit.Mvvm.Messaging;
 using RedNachoToolbox.Messaging;
+using RedNachoToolbox.Services; // added for DI resolution
 
 namespace RedNachoToolbox;
 
@@ -27,21 +28,19 @@ public partial class MainPage : ContentPage
     // Debounce for search text changes
     private System.Threading.CancellationTokenSource? _searchCts;
 
-    public MainPage()
+    public MainPage(MainViewModel? vm = null)
     {
         InitializeComponent();
-        
-        // Initialize and set the ViewModel
-        ViewModel = new MainViewModel();
+        // Resolver vía DI si no se inyectó explícitamente
+        ViewModel = vm ?? ServiceHelper.GetRequiredService<MainViewModel>();
         BindingContext = ViewModel;
-        
         // Initialize and cache main content views (lazy for Productivity)
         _dashboardView = new DashboardView { BindingContext = ViewModel };
         MainContentHost.Content = _dashboardView;
-        
+
         // React to sidebar collapse/expand to keep parent active only when collapsed
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        
+
         // Subscribe to tool open messages from views via WeakReferenceMessenger
         try
         {
@@ -54,7 +53,7 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"Error subscribing to OpenTool: {ex.Message}");
         }
-        
+
         // Subscribe to appearing event to refresh ViewModel state
         this.Appearing += OnPageAppearing;
     }
@@ -145,10 +144,10 @@ public partial class MainPage : ContentPage
     {
         // Refresh ViewModel state when page appears (e.g., returning from Settings)
         RefreshViewModelState();
-        
+
         // Update active button backgrounds to fix initial color bug and theme change bug
         UpdateActiveButtonBackgrounds();
-        
+
         System.Diagnostics.Debug.WriteLine("Page appearing - ViewModel refreshed and active button backgrounds updated");
     }
 
@@ -160,11 +159,11 @@ public partial class MainPage : ContentPage
         // Update sidebar state from preferences
         var isSidebarCollapsed = SettingsPage.LoadSidebarPreference();
         ViewModel.UpdateSidebarState(isSidebarCollapsed);
-        
+
         // Update theme state from current application resources
         var isDarkTheme = IsCurrentlyDarkTheme();
         ViewModel.UpdateThemeState(isDarkTheme);
-        
+
         System.Diagnostics.Debug.WriteLine($"MainPage refreshed ViewModel state - Sidebar: {(isSidebarCollapsed ? "Collapsed" : "Expanded")}, Theme: {(isDarkTheme ? "Dark" : "Light")}");
     }
 
@@ -189,12 +188,12 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"Error detecting current theme in MainPage: {ex.Message}");
         }
-        
+
         return false; // Default to light theme
     }
 
     #region Search Event Handlers
-    
+
     private void OnSearchButtonPressed(object sender, EventArgs e)
     {
         if (sender is SearchBar searchBar)
@@ -205,7 +204,7 @@ public partial class MainPage : ContentPage
                 // Update the ViewModel's search text
                 ViewModel.SearchText = searchText;
                 System.Diagnostics.Debug.WriteLine($"Search executed for: {searchText}");
-                
+
                 // Unfocus the search bar
                 searchBar.Unfocus();
             }
@@ -253,12 +252,12 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("Dashboard hover entered - Button is active, no hover effect needed");
                 return;
             }
-            
+
             // Theme-aware hover color (same as active color)
-            var hoverColor = ViewModel.IsDarkTheme 
+            var hoverColor = ViewModel.IsDarkTheme
                 ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
                 : Color.FromArgb("#F5F5F5"); // Light gray for light theme
-            
+
             frame.BackgroundColor = hoverColor;
             System.Diagnostics.Debug.WriteLine($"Dashboard hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
         }
@@ -274,7 +273,7 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("Dashboard hover exited - Button is active, maintaining active color");
                 return;
             }
-            
+
             frame.BackgroundColor = Colors.Transparent;
             System.Diagnostics.Debug.WriteLine("Dashboard hover exited - Returned to transparent");
         }
@@ -291,12 +290,12 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("Productivity (alias) hover entered - Button is active, no hover effect needed");
                 return;
             }
-            
+
             // Theme-aware hover color (same as active color)
-            var hoverColor = ViewModel.IsDarkTheme 
+            var hoverColor = ViewModel.IsDarkTheme
                 ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
                 : Color.FromArgb("#F5F5F5"); // Light gray for light theme
-            
+
             frame.BackgroundColor = hoverColor;
             System.Diagnostics.Debug.WriteLine($"Productivity (alias) hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
         }
@@ -312,7 +311,7 @@ public partial class MainPage : ContentPage
                 System.Diagnostics.Debug.WriteLine("Productivity (alias) hover exited - Button is active, maintaining active color");
                 return;
             }
-            
+
             frame.BackgroundColor = Colors.Transparent;
             System.Diagnostics.Debug.WriteLine("Productivity (alias) hover exited - Returned to transparent");
         }
@@ -324,10 +323,10 @@ public partial class MainPage : ContentPage
         if (sender is Frame frame)
         {
             // More contrasting hover color for Settings (since it has different background)
-            var hoverColor = ViewModel.IsDarkTheme 
+            var hoverColor = ViewModel.IsDarkTheme
                 ? Color.FromArgb("#404040") // Lighter gray for dark theme (more contrast)
                 : Color.FromArgb("#E0E0E0"); // Darker gray for light theme (more contrast)
-            
+
             frame.BackgroundColor = hoverColor;
             System.Diagnostics.Debug.WriteLine($"Settings hover entered - Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}, Color: {hoverColor}");
         }
@@ -362,35 +361,35 @@ public partial class MainPage : ContentPage
                 return;
             }
             _navBusy = true;
-            
+
             // Enhanced visual feedback for Frame-based button with theme-aware colors
             if (sender is Frame frame) _ = PressFeedbackAsync(frame);
-            
+
             // Animate previous active indicators to deactivate (if any)
             if (ViewModel.IsProductivityActive)
             {
                 _ = AnimateIndicatorTransition(ProductivityIndicatorCapsule, false);
                 _ = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, false);
             }
-            
+
             // Clear selection from Productivity tool list
             ClearAllProductivityToolActiveFlags();
             ClearProductivityListActiveStateUI();
 
             // Set Dashboard as active page
             ViewModel.SetActivePage("Dashboard");
-            
+
             // Animate new active indicators (both expanded capsule and collapsed dot)
             _ = AnimateIndicatorTransition(DashboardIndicatorCapsule, true);
             _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, true);
-            
+
             // Update active button backgrounds
             UpdateActiveButtonBackgrounds();
-            
+
             // Clear any active filters to show all applications (Dashboard view)
             ViewModel.ClearFilters();
             System.Diagnostics.Debug.WriteLine("Dashboard view activated - filters cleared, set as active page");
-            
+
             // Swap main content to Dashboard view
             if (_dashboardView == null)
                 _dashboardView = new DashboardView { BindingContext = ViewModel };
@@ -423,38 +422,38 @@ public partial class MainPage : ContentPage
                 return;
             }
             _navBusy = true;
-            
+
             // Enhanced visual feedback for Frame-based button with theme-aware colors
             if (sender is Frame frame) _ = PressFeedbackAsync(frame);
-            
+
             // Animate previous active indicators to deactivate (if any)
             if (ViewModel.IsDashboardActive)
             {
                 _ = AnimateIndicatorTransition(DashboardIndicatorCapsule, false);
                 _ = AnimateCollapsedDotTransition(DashboardIndicatorDotCollapsed, false);
             }
-            
+
             // Clear selection from Productivity tool list (navigating to category root)
             ClearAllProductivityToolActiveFlags();
             ClearProductivityListActiveStateUI();
 
             // Set Productivity as active page
             ViewModel.SetActivePage("Productivity");
-            
+
             // Animate new active indicators (both expanded capsule and collapsed dot)
             _ = AnimateIndicatorTransition(ProductivityIndicatorCapsule, true);
             _ = AnimateCollapsedDotTransition(ProductivityIndicatorDotCollapsed, true);
-            
+
             // Update active button backgrounds
             UpdateActiveButtonBackgrounds();
-            
+
             // Swap main content to Productivity view (lists only Productivity tools)
             // Ensure category is set to Productivity before hosting the view
             ViewModel.SelectedCategory = ToolCategory.Productivity;
             if (_productivityView == null)
                 _productivityView = new ProductivityView { BindingContext = ViewModel };
             MainContentHost.Content = _productivityView;
-            
+
             System.Diagnostics.Debug.WriteLine("Productivity view selected - set as active page and filtered by Productivity");
         }
         catch (Exception ex)
@@ -596,7 +595,7 @@ public partial class MainPage : ContentPage
     {
         if (sender is Frame frame)
         {
-            var hoverColor = ViewModel.IsDarkTheme 
+            var hoverColor = ViewModel.IsDarkTheme
                 ? Color.FromArgb("#2A2A2A") // Dark gray for dark theme
                 : Color.FromArgb("#F5F5F5"); // Light gray for light theme
             frame.BackgroundColor = hoverColor;
@@ -616,10 +615,10 @@ public partial class MainPage : ContentPage
         try
         {
             System.Diagnostics.Debug.WriteLine("OnSettingsClicked - Event handler called");
-            
+
             // Enhanced visual feedback for Frame-based button with theme-aware colors
             if (sender is Frame frame) _ = PressFeedbackAsync(frame);
-            
+
             // Note: Settings doesn't change active page state since it navigates to separate view
             // The previous active page (Dashboard/Documentation) should remain active when returning
 
@@ -719,34 +718,34 @@ public partial class MainPage : ContentPage
         try
         {
             // Active background color matches hover color (same as hover state)
-            var activeColor = ViewModel.IsDarkTheme 
+            var activeColor = ViewModel.IsDarkTheme
                 ? Color.FromArgb("#2A2A2A") // Same as hover - Dark gray for dark theme
                 : Color.FromArgb("#F5F5F5"); // Same as hover - Light gray for light theme
-            
+
             var transparentColor = Colors.Transparent;
-            
+
             // Update expanded buttons
             if (DashboardButtonFrame != null)
             {
                 DashboardButtonFrame.BackgroundColor = ViewModel.IsDashboardActive ? activeColor : transparentColor;
             }
-            
+
             if (ProductivityButtonFrame != null)
             {
                 ProductivityButtonFrame.BackgroundColor = ViewModel.IsProductivityActive ? activeColor : transparentColor;
             }
-            
+
             // Update collapsed buttons
             if (DashboardButtonFrameCollapsed != null)
             {
                 DashboardButtonFrameCollapsed.BackgroundColor = ViewModel.IsDashboardActive ? activeColor : transparentColor;
             }
-            
+
             if (ProductivityButtonFrameCollapsed != null)
             {
                 ProductivityButtonFrameCollapsed.BackgroundColor = ViewModel.IsProductivityActive ? activeColor : transparentColor;
             }
-            
+
             System.Diagnostics.Debug.WriteLine($"Updated active button backgrounds (matching hover colors) - Active page: {ViewModel.ActivePage}, Theme: {(ViewModel.IsDarkTheme ? "Dark" : "Light")}");
         }
         catch (Exception ex)

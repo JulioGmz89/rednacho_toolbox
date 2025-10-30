@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.ApplicationModel;
 using System.Threading;
+using MauiApp = Microsoft.Maui.Controls.Application;
 #if WINDOWS
 using Microsoft.UI.Xaml.Controls;
 #endif
@@ -123,7 +124,7 @@ public partial class MarkdownToPdfView : ContentView
                     #pragma warning restore CA1416
                     if (!saveResult.IsSuccessful)
                     {
-                        await Application.Current!.MainPage!.DisplayAlert("Error", saveResult.Exception?.Message ?? "No se pudo guardar el archivo.", "OK");
+                        await MauiApp.Current!.MainPage!.DisplayAlert("Error", saveResult.Exception?.Message ?? "No se pudo guardar el archivo.", "OK");
                         return;
                     }
                     // Abrir
@@ -153,7 +154,7 @@ public partial class MarkdownToPdfView : ContentView
                 var pdfBytes = await ViewModel.GeneratePdfAsync();
                 if (pdfBytes == null || pdfBytes.Length == 0)
                 {
-                    await Application.Current!.MainPage!.DisplayAlert("Error", "No se pudo generar el PDF.", "OK");
+                    await MauiApp.Current!.MainPage!.DisplayAlert("Error", "No se pudo generar el PDF.", "OK");
                     return;
                 }
 
@@ -165,7 +166,7 @@ public partial class MarkdownToPdfView : ContentView
 
                 if (!saveResult.IsSuccessful)
                 {
-                    await Application.Current!.MainPage!.DisplayAlert("Error", saveResult.Exception?.Message ?? "No se pudo guardar el archivo.", "OK");
+                    await MauiApp.Current!.MainPage!.DisplayAlert("Error", saveResult.Exception?.Message ?? "No se pudo guardar el archivo.", "OK");
                     // Aunque falle el guardado, restaurar la vista previa por si cambió
                     RestorePreview();
                     return;
@@ -190,7 +191,7 @@ public partial class MarkdownToPdfView : ContentView
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error generating PDF: {ex.Message}");
-            await Application.Current!.MainPage!.DisplayAlert("Error", $"Ocurrió un problema al generar el PDF.\n\n{ex}", "OK");
+            await MauiApp.Current!.MainPage!.DisplayAlert("Error", $"Ocurrió un problema al generar el PDF.\n\n{ex}", "OK");
         }
     }
 

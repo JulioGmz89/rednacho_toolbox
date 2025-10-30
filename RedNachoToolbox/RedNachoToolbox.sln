@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11123.170 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedNachoToolbox", "RedNachoToolbox\RedNachoToolbox.csproj", "{FB88E554-4FC7-4FB5-B436-8B9179CEE811}"
 EndProject
 Global
@@ -10,7 +13,11 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FB88E554-4FC7-4FB5-B436-8B9179CEE811}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FB88E554-4FC7-4FB5-B436-8B9179CEE811}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB88E554-4FC7-4FB5-B436-8B9179CEE811}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{FB88E554-4FC7-4FB5-B436-8B9179CEE811}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB88E554-4FC7-4FB5-B436-8B9179CEE811}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
