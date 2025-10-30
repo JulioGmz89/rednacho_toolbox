@@ -48,31 +48,38 @@ public static class MauiProgram
                 fonts.AddFont("Inter/Inter_18pt-ThinItalic.ttf", "InterThinItalic");
             });
 
-        // Registro de servicios (DI)
+        // Service registration (DI)
         builder.Services.AddSingleton<IToolRegistry, ToolRegistry>();
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddTransient<MainPage>();
-        // Futuro: builder.Services.AddSingleton<IThemeService, ThemeService>();
+        
+        // Configure logging
+        builder.Logging.AddDebug();
+     
+#if DEBUG
+        // Add console logging in debug mode for better diagnostics
+        builder.Logging.SetMinimumLevel(LogLevel.Debug);
+#else
+        builder.Logging.SetMinimumLevel(LogLevel.Information);
+#endif
+
+        // Future: builder.Services.AddSingleton<IThemeService, ThemeService>();
 
         // Hide native On/Off text beside Switch on Windows (ToggleSwitch OnContent/OffContent)
         SwitchHandler.Mapper.AppendToMapping("HideWinSwitchLabels", (handler, view) =>
         {
 #if WINDOWS
             if (handler?.PlatformView is ToggleSwitch ts)
-            {
-                ts.OnContent = string.Empty;
-                ts.OffContent = string.Empty;
+     {
+           ts.OnContent = string.Empty;
+    ts.OffContent = string.Empty;
             }
 #endif
         });
 
-#if DEBUG
-        builder.Logging.AddDebug();
-#endif
-
         var app = builder.Build();
-        // Inicializa helper estático para resolver servicios desde páginas sin constructor DI
+        // Initialize static helper to resolve services from pages without constructor DI
         ServiceHelper.Services = app.Services;
-        return app;
+     return app;
     }
 }
