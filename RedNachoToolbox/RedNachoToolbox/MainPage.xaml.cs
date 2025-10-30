@@ -6,7 +6,6 @@ using RedNachoToolbox.Tools.MarkdownToPdf;
 using System.Linq;
 using CommunityToolkit.Mvvm.Messaging;
 using RedNachoToolbox.Messaging;
-using RedNachoToolbox.Services; // added for DI resolution
 using Microsoft.Extensions.Logging;
 
 namespace RedNachoToolbox;
@@ -38,13 +37,13 @@ public sealed partial class MainPage : ContentPage, IDisposable
     // Disposal tracking
     private bool _disposed;
 
-    public MainPage(MainViewModel? vm = null, ILogger<MainPage>? logger = null)
+    public MainPage(MainViewModel viewModel, ILogger<MainPage> logger)
     {
         InitializeComponent();
 
-        // Resolve via DI if not explicitly injected
-        ViewModel = vm ?? ServiceHelper.GetRequiredService<MainViewModel>();
-        _logger = logger ?? ServiceHelper.GetRequiredService<ILogger<MainPage>>();
+        // Use dependency injection - no more ServiceHelper!
+        ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         BindingContext = ViewModel;
 
@@ -71,7 +70,7 @@ public sealed partial class MainPage : ContentPage, IDisposable
         // Subscribe to appearing event to refresh ViewModel state
         this.Appearing += OnPageAppearing;
 
-        _logger.LogDebug("MainPage initialized successfully");
+        _logger.LogDebug("MainPage initialized successfully with proper DI");
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

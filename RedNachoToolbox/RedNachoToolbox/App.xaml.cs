@@ -1,33 +1,29 @@
 ﻿using RedNachoToolbox.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RedNachoToolbox;
 
 public partial class App : Application
 {
-    public App()
+    private readonly IServiceProvider _services;
+
+    public App(IServiceProvider services)
     {
+        _services = services ?? throw new ArgumentNullException(nameof(services));
+
         InitializeComponent();
 
-        // Initialize theme service (will be resolved from DI after app is built)
-        // Theme will be applied in OnStart
-        MainPage = new AppShell();
-    }
-
-    protected override void OnStart()
-    {
-        base.OnStart();
-
-        // Apply saved theme preference at startup using IThemeService
+        // Initialize theme service
         try
         {
-            var themeService = ServiceHelper.Services?.GetService(typeof(IThemeService)) as IThemeService;
-            themeService?.Initialize();
+            var themeService = _services.GetRequiredService<IThemeService>();
+            themeService.Initialize();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error initializing theme: {ex.Message}");
-            // Fallback to legacy method if service not available
-            SettingsPage.ApplySavedTheme();
         }
+
+        MainPage = new AppShell();
     }
 }
