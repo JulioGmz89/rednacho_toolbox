@@ -6,7 +6,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:converters="clr-namespace:RedNachoToolbox.Converters"
-    xmlns:cp="clr-namespace:ColorPicker.Maui;assembly=ColorPicker.Maui"
+    <!-- ColorPicker.Maui is not compatible with .NET 9 - temporarily commented out for future modern implementation -->
+  <!--xmlns:cp="clr-namespace:ColorPicker.Maui;assembly=ColorPicker.Maui"-->
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     mc:Ignorable="d">
 
@@ -68,8 +69,14 @@
                                             </Grid>
                                         </toolkit:Expander.Header>
                                         <!-- Full picker when expanded -->
-                                        <cp:ColorPicker PickedColor="{Binding TextColor, Mode=TwoWay}" HeightRequest="180" />
-                                    </toolkit:Expander>
+   <!--<cp:ColorPicker PickedColor="{Binding TextColor, Mode=TwoWay}" HeightRequest="180" />-->
+         <!-- TODO: Implement modern color picker alternative for .NET 9+ -->
+          <Label Text="Color picker temporarily disabled (pending .NET 9 compatible implementation)" 
+      Padding="8" 
+     FontSize="12" 
+   TextColor="{DynamicResource TextColorSecondary}" 
+       HorizontalTextAlignment="Center"/>
+       </toolkit:Expander>
                                 </Border>
 
                                 <Label Grid.Row="3" Grid.Column="0" Text="Margins (cm)" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
