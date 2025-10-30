@@ -5,6 +5,8 @@ namespace RedNachoToolbox.ViewModels;
 /// <summary>
 /// Base class for all ViewModels in the Red Nacho ToolBox application.
 /// Inherits from ObservableObject to provide INotifyPropertyChanged implementation.
+/// Uses manual properties to avoid source generator conflicts in base class.
+/// Derived classes can use [ObservableProperty] source generators.
 /// </summary>
 public abstract class BaseViewModel : ObservableObject
 {
