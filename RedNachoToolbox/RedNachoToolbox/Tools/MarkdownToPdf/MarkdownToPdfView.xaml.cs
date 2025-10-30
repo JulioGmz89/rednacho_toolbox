@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.ComponentModel;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Xaml;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using System.Threading.Tasks;
