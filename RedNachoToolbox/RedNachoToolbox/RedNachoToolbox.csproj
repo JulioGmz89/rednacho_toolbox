@@ -74,5 +74,8 @@
     <MauiXaml Update="Controls\ColorPickerControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Controls\LoadingOverlay.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
   </ItemGroup>
 </Project>
