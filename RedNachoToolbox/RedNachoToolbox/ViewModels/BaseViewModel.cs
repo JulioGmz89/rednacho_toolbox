@@ -12,6 +12,8 @@ public abstract class BaseViewModel : ObservableObject
 {
     private bool _isBusy;
     private string _title = string.Empty;
+    private bool _isLoading;
+    private string _loadingMessage = "Loading...";
 
     /// <summary>
     /// Gets or sets a value indicating whether the ViewModel is currently performing an operation.
@@ -42,6 +44,24 @@ public abstract class BaseViewModel : ObservableObject
     /// Useful for binding to UI elements that should be enabled when not busy.
     /// </summary>
     public bool IsNotBusy => !IsBusy;
+
+    /// <summary>
+    /// Gets or sets whether a loading overlay should be shown.
+    /// </summary>
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the message to display in the loading overlay.
+    /// </summary>
+    public string LoadingMessage
+    {
+        get => _loadingMessage;
+        set => SetProperty(ref _loadingMessage, value);
+    }
 
     #region Lifecycle Methods
 
