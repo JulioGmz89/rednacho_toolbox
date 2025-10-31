@@ -4,6 +4,48 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ANIMATION RESOURCES -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
+    <!-- Animation Durations (in milliseconds) -->
+  <x:Double x:Key="AnimationDurationFast">150</x:Double>
+    <x:Double x:Key="AnimationDurationNormal">250</x:Double>
+<x:Double x:Key="AnimationDurationSlow">400</x:Double>
+    
+    <!-- Easing Functions -->
+    <Easing x:Key="EaseOut" x:FactoryMethod="CubicOut" />
+    <Easing x:Key="EaseInOut" x:FactoryMethod="CubicInOut" />
+    <Easing x:Key="EaseIn" x:FactoryMethod="CubicIn" />
+  
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SHADOW RESOURCES -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
+    <!-- Card Shadow (elevated) -->
+    <Shadow x:Key="CardShadow">
+        <Shadow.Brush>
+            <SolidColorBrush Color="{AppThemeBinding Light=#000000, Dark=#000000}" />
+        </Shadow.Brush>
+<Shadow.Offset>0,2</Shadow.Offset>
+        <Shadow.Radius>8</Shadow.Radius>
+        <Shadow.Opacity>0.15</Shadow.Opacity>
+    </Shadow>
+  
+    <!-- Card Shadow Hover (more elevated) -->
+    <Shadow x:Key="CardShadowHover">
+    <Shadow.Brush>
+    <SolidColorBrush Color="{AppThemeBinding Light=#000000, Dark=#000000}" />
+        </Shadow.Brush>
+    <Shadow.Offset>0,4</Shadow.Offset>
+        <Shadow.Radius>12</Shadow.Radius>
+        <Shadow.Opacity>0.2</Shadow.Opacity>
+    </Shadow>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- CONTROL STYLES -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
     </Style>

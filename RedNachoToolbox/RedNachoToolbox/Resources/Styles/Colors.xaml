@@ -53,10 +53,10 @@
     <Color x:Key="CardShadowColor">#ACACAC</Color>
     <Color x:Key="ContentBackgroundColor">#FAFAFA</Color>
 
-    <!-- Typography per MejoraDiseñoUI: primary #212121, secondary #616161, tertiary/placeholder #9E9E9E, disabled #BDBDBD -->
+    <!-- Typography per MejoraDiseñoUI: primary #212121, secondary #616161, tertiary/placeholder #757575 (improved), disabled #BDBDBD -->
     <Color x:Key="TextColor">#212121</Color>
     <Color x:Key="TextColorSecondary">#616161</Color>
-    <Color x:Key="TextColorTertiary">#9E9E9E</Color>
+    <Color x:Key="TextColorTertiary">#757575</Color> <!-- Improved from #9E9E9E for better contrast (4.54:1 on white) -->
     <Color x:Key="TextColorDisabled">#BDBDBD</Color>
 
     <Color x:Key="ButtonBackgroundColor">#F8F9FA</Color>
