@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentView
- x:Class="RedNachoToolbox.Tools.MarkdownToPdf.MarkdownToPdfView"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:local="clr-namespace:RedNachoToolbox.Tools.MarkdownToPdf"
     xmlns:converters="clr-namespace:RedNachoToolbox.Converters"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    mc:Ignorable="d">
+   xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+  xmlns:controls="clr-namespace:RedNachoToolbox.Controls"
+             x:Class="RedNachoToolbox.Tools.MarkdownToPdf.MarkdownToPdfView"
+       x:DataType="local:MarkdownToPdfViewModel"
+   BackgroundColor="{DynamicResource PageBackgroundColor}">
     
     <!-- ColorPicker.Maui namespace removed - not compatible with .NET 9 -->
-    <!-- xmlns:cp="clr-namespace:ColorPicker.Maui;assembly=ColorPicker.Maui" -->
+ <!-- xmlns:cp="clr-namespace:ColorPicker.Maui;assembly=ColorPicker.Maui" -->
 
     <ContentView.Resources>
         <converters:StringToDoubleConverter x:Key="StringToDoubleConverter" />
-    </ContentView.Resources>
+ </ContentView.Resources>
 
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*" Padding="16" BackgroundColor="{DynamicResource PageBackgroundColor}">
         <!-- Header -->
@@ -56,29 +56,23 @@
 
                                 <Label Grid.Row="2" Grid.Column="0" Text="Text color" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
                                 <Border Grid.Row="2" Grid.Column="1" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" Background="{DynamicResource InputBackgroundColor}" StrokeShape="RoundRectangle 8,8,8,8" Padding="6">
-                                    <!-- Compact color picker: header with swatch + hex, expandable picker body -->
-                                    <toolkit:Expander x:Name="ColorExpander" ExpandedChanged="OnColorExpanderExpandedChanged">
-                                        <toolkit:Expander.Header>
-                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Padding="2">
-                                                <!-- Swatch -->
-                                                <Border WidthRequest="20" HeightRequest="20" Background="{Binding TextColor}" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 4,4,4,4" />
-                                                <!-- Hex code entry -->
-                                                <Entry Grid.Column="1" Text="{Binding TextColorHex, Mode=TwoWay}" BackgroundColor="Transparent" TextColor="{DynamicResource InputTextColor}" Placeholder="#RRGGBB" MaxLength="7"/>
-                                                <!-- Chevron -->
-                                                <Image x:Name="ChevronImage" Grid.Column="2" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" Opacity="0.85"
-                                                       Source="{AppThemeBinding Light=chevron_light.png, Dark=chevron_dark.png}" />
-                                            </Grid>
-                                        </toolkit:Expander.Header>
-                                        <!-- Full picker when expanded -->
-   <!--<cp:ColorPicker PickedColor="{Binding TextColor, Mode=TwoWay}" HeightRequest="180" />-->
-         <!-- TODO: Implement modern color picker alternative for .NET 9+ -->
-           <Label Text="Color picker temporarily disabled (pending .NET 9 compatible implementation)" 
-    Padding="8" 
-FontSize="12" 
-     TextColor="{DynamicResource TextColorSecondary}" 
-              HorizontalTextAlignment="Center"/>
-       </toolkit:Expander>
-                                </Border>
+           <!-- Compact color picker: header with swatch + hex, expandable picker body -->
+           <toolkit:Expander x:Name="ColorExpander" ExpandedChanged="OnColorExpanderExpandedChanged">
+      <toolkit:Expander.Header>
+       <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Padding="2">
+              <!-- Swatch -->
+  <Border WidthRequest="20" HeightRequest="20" Background="{Binding TextColor}" Stroke="{DynamicResource InputBorderColor}" StrokeThickness="1" StrokeShape="RoundRectangle 4,4,4,4" />
+ <!-- Hex code entry -->
+         <Entry Grid.Column="1" Text="{Binding TextColorHex, Mode=TwoWay}" BackgroundColor="Transparent" TextColor="{DynamicResource InputTextColor}" Placeholder="#RRGGBB" MaxLength="7"/>
+   <!-- Chevron -->
+         <Image x:Name="ChevronImage" Grid.Column="2" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" Opacity="0.85"
+         Source="{AppThemeBinding Light=chevron_light.png, Dark=chevron_dark.png}" />
+       </Grid>
+</toolkit:Expander.Header>
+        <!-- Modern SkiaSharp-based color picker for .NET 9 -->
+              <controls:ColorPickerControl PickedColor="{Binding TextColor, Mode=TwoWay}" />
+         </toolkit:Expander>
+  </Border>
 
                                 <Label Grid.Row="3" Grid.Column="0" Text="Margins (cm)" VerticalOptions="Center" TextColor="{DynamicResource TextColor}"/>
                                 <!-- 2x2 grid for better width per input -->

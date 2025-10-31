@@ -6,12 +6,18 @@ using RedNachoToolbox.Tools.MarkdownToPdf;
 using System.Linq;
 using CommunityToolkit.Mvvm.Messaging;
 using RedNachoToolbox.Messaging;
-using RedNachoToolbox.Services; // added for DI resolution
+using Microsoft.Extensions.Logging;
 
 namespace RedNachoToolbox;
 
-public partial class MainPage : ContentPage
+/// <summary>
+/// Main page of the application with proper resource cleanup via IDisposable.
+/// Manages navigation, tool selection, and UI state.
+/// </summary>
+public sealed partial class MainPage : ContentPage, IDisposable
 {
+    private readonly ILogger<MainPage> _logger;
+
     /// <summary>
     /// Gets the MainViewModel instance bound to this page
     /// </summary>
@@ -26,14 +32,21 @@ public partial class MainPage : ContentPage
     private bool _navBusy;
 
     // Debounce for search text changes
-    private System.Threading.CancellationTokenSource? _searchCts;
+    private CancellationTokenSource? _searchCts;
 
-    public MainPage(MainViewModel? vm = null)
+    // Disposal tracking
+    private bool _disposed;
+
+    public MainPage(MainViewModel viewModel, ILogger<MainPage> logger)
     {
         InitializeComponent();
-        // Resolver vía DI si no se inyectó explícitamente
-        ViewModel = vm ?? ServiceHelper.GetRequiredService<MainViewModel>();
+
+        // Use dependency injection - no more ServiceHelper!
+        ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
         BindingContext = ViewModel;
+
         // Initialize and cache main content views (lazy for Productivity)
         _dashboardView = new DashboardView { BindingContext = ViewModel };
         MainContentHost.Content = _dashboardView;
@@ -51,11 +64,13 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error subscribing to OpenTool: {ex.Message}");
+            _logger.LogError(ex, "Error subscribing to OpenTool message");
         }
 
         // Subscribe to appearing event to refresh ViewModel state
         this.Appearing += OnPageAppearing;
+
+        _logger.LogDebug("MainPage initialized successfully with proper DI");
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -926,4 +941,43 @@ public partial class MainPage : ContentPage
     }
 
     #endregion
+
+    /// <summary>
+    /// Disposes of managed and unmanaged resources.
+    /// Unregisters event handlers and cancels pending operations to prevent memory leaks.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        try
+        {
+            // Cancel any pending search operations
+            _searchCts?.Cancel();
+            _searchCts?.Dispose();
+            _searchCts = null;
+
+            // Unregister all messenger subscriptions
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+
+            // Unsubscribe from ViewModel events
+            if (ViewModel != null)
+            {
+                ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            }
+
+            // Unsubscribe from page events
+            this.Appearing -= OnPageAppearing;
+
+            _logger.LogDebug("MainPage disposed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during MainPage disposal");
+        }
+        finally
+        {
+            _disposed = true;
+        }
+    }
 }

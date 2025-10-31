@@ -5,8 +5,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:RedNachoToolbox.Tools.MarkdownToPdf"
+    xmlns:converters="clr-namespace:RedNachoToolbox.Converters"
     mc:Ignorable="d"
+    x:DataType="local:MarkdownToPdfViewModel"
     Title="Markdown to PDF">
+    
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*" Padding="16" BackgroundColor="{DynamicResource PageBackgroundColor}">
         <!-- Header -->

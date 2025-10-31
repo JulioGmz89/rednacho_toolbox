@@ -4,6 +4,7 @@ using RedNachoToolbox.Services;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using RedNachoToolbox.Messaging;
+using RedNachoToolbox.Constants;
 
 namespace RedNachoToolbox.ViewModels;
 
@@ -100,8 +101,8 @@ public partial class MainViewModel : BaseViewModel
     }
     private void LoadPreferences()
     {
-        _isSidebarCollapsed = Preferences.Get("IsSidebarCollapsed", false);
-        _isDarkTheme = IsCurrentlyDarkTheme();
+         _isSidebarCollapsed = Preferences.Get(PreferenceKeys.IsSidebarCollapsed, false);
+   _isDarkTheme = IsCurrentlyDarkTheme();
     }
     private void LoadRecentlyUsedTools() { /* Inicialmente vacío; futura persistencia */ }
     #endregion

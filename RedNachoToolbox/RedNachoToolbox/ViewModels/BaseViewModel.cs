@@ -1,16 +1,19 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace RedNachoToolbox.ViewModels;
 
 /// <summary>
 /// Base class for all ViewModels in the Red Nacho ToolBox application.
-/// Provides common functionality like INotifyPropertyChanged implementation and common properties.
+/// Inherits from ObservableObject to provide INotifyPropertyChanged implementation.
+/// Uses manual properties to avoid source generator conflicts in base class.
+/// Derived classes can use [ObservableProperty] source generators.
 /// </summary>
-public abstract class BaseViewModel : INotifyPropertyChanged
+public abstract class BaseViewModel : ObservableObject
 {
     private bool _isBusy;
     private string _title = string.Empty;
+    private bool _isLoading;
+    private string _loadingMessage = "Loading...";
 
     /// <summary>
     /// Gets or sets a value indicating whether the ViewModel is currently performing an operation.
@@ -18,7 +21,13 @@ public abstract class BaseViewModel : INotifyPropertyChanged
     public bool IsBusy
     {
         get => _isBusy;
-        set => SetProperty(ref _isBusy, value);
+        set
+        {
+            if (SetProperty(ref _isBusy, value))
+            {
+                OnPropertyChanged(nameof(IsNotBusy));
+            }
+        }
     }
 
     /// <summary>
@@ -36,49 +45,23 @@ public abstract class BaseViewModel : INotifyPropertyChanged
     /// </summary>
     public bool IsNotBusy => !IsBusy;
 
-    #region INotifyPropertyChanged Implementation
-
     /// <summary>
-    /// Occurs when a property value changes.
+    /// Gets or sets whether a loading overlay should be shown.
     /// </summary>
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    /// <summary>
-    /// Raises the PropertyChanged event for the specified property.
-    /// </summary>
-    /// <param name="propertyName">The name of the property that changed</param>
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    public bool IsLoading
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
     }
 
     /// <summary>
-    /// Sets the property value and raises PropertyChanged if the value has changed.
-    /// Also raises PropertyChanged for IsNotBusy when IsBusy changes.
+    /// Gets or sets the message to display in the loading overlay.
     /// </summary>
-    /// <typeparam name="T">The type of the property</typeparam>
-    /// <param name="field">Reference to the backing field</param>
-    /// <param name="value">The new value</param>
-    /// <param name="propertyName">The name of the property</param>
-    /// <returns>True if the property was changed, false otherwise</returns>
-    protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    public string LoadingMessage
     {
-        if (EqualityComparer<T>.Default.Equals(field, value))
-            return false;
-
-        field = value;
-        OnPropertyChanged(propertyName);
-
-        // Special handling for IsBusy to also notify IsNotBusy
-        if (propertyName == nameof(IsBusy))
-        {
-            OnPropertyChanged(nameof(IsNotBusy));
-        }
-
-        return true;
+        get => _loadingMessage;
+        set => SetProperty(ref _loadingMessage, value);
     }
-
-    #endregion
 
     #region Lifecycle Methods
 

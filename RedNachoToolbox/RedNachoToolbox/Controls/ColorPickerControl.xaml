@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:RedNachoToolbox.Controls"
+ x:Class="RedNachoToolbox.Controls.ColorPickerControl"
+           x:Name="Root">
+
+    <VerticalStackLayout Spacing="12">
+        <!-- Color canvas -->
+        <local:ColorPickerCanvas x:Name="Canvas"
+    SelectedColor="{Binding PickedColor, Source={x:Reference Root}, Mode=TwoWay}"
+           HeightRequest="220"
+      HorizontalOptions="Center" />
+        
+      <!-- Color preview and hex input -->
+      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+   <!-- Color preview swatch -->
+            <Border WidthRequest="40"
+   HeightRequest="40"
+          Background="{Binding PickedColor, Source={x:Reference Root}}"
+        Stroke="{DynamicResource InputBorderColor}"
+            StrokeThickness="2"
+   StrokeShape="RoundRectangle 8"
+         HorizontalOptions="Start"
+      VerticalOptions="Center" />
+          
+        <!-- Hex input -->
+            <Border Grid.Column="1"
+       Style="{StaticResource InputContainerBorderStyle}"
+    Stroke="{DynamicResource InputBorderColor}"
+       StrokeThickness="1">
+     <Entry x:Name="HexEntry"
+    Text="{Binding HexColor, Source={x:Reference Root}, Mode=TwoWay}"
+  Placeholder="#RRGGBB"
+        MaxLength="7"
+         BackgroundColor="Transparent"
+         TextColor="{DynamicResource InputTextColor}"
+          PlaceholderColor="{DynamicResource InputPlaceholderColor}"
+        Completed="OnHexEntryCompleted" />
+</Border>
+        </Grid>
+        
+      <!-- Preset colors -->
+        <Label Text="Common colors"
+      FontSize="12"
+               TextColor="{DynamicResource TextColorSecondary}"
+      Margin="0,8,0,0" />
+    
+        <FlexLayout Wrap="Wrap"
+    JustifyContent="Start"
+    AlignItems="Start">
+    <FlexLayout.Resources>
+  <Style TargetType="Border">
+          <Setter Property="Margin" Value="0,0,8,8" />
+   </Style>
+</FlexLayout.Resources>
+     <!-- Black -->
+    <Border WidthRequest="32"
+       HeightRequest="32"
+  Background="#000000"
+         Stroke="{DynamicResource InputBorderColor}"
+               StrokeThickness="1"
+         StrokeShape="RoundRectangle 6">
+ <Border.GestureRecognizers>
+   <TapGestureRecognizer Tapped="OnPresetColorTapped"
+              CommandParameter="#000000" />
+    </Border.GestureRecognizers>
+            </Border>
+            
+  <!-- Dark Gray -->
+            <Border WidthRequest="32"
+         HeightRequest="32"
+  Background="#424242"
+       Stroke="{DynamicResource InputBorderColor}"
+   StrokeThickness="1"
+ StrokeShape="RoundRectangle 6">
+                <Border.GestureRecognizers>
+         <TapGestureRecognizer Tapped="OnPresetColorTapped"
+   CommandParameter="#424242" />
+      </Border.GestureRecognizers>
+      </Border>
+            
+ <!-- Gray -->
+            <Border WidthRequest="32"
+               HeightRequest="32"
+            Background="#9E9E9E"
+           Stroke="{DynamicResource InputBorderColor}"
+      StrokeThickness="1"
+        StrokeShape="RoundRectangle 6">
+     <Border.GestureRecognizers>
+           <TapGestureRecognizer Tapped="OnPresetColorTapped"
+              CommandParameter="#9E9E9E" />
+     </Border.GestureRecognizers>
+ </Border>
+            
+            <!-- White -->
+         <Border WidthRequest="32"
+           HeightRequest="32"
+            Background="#FFFFFF"
+  Stroke="{DynamicResource InputBorderColor}"
+ StrokeThickness="1"
+         StrokeShape="RoundRectangle 6">
+<Border.GestureRecognizers>
+     <TapGestureRecognizer Tapped="OnPresetColorTapped"
+     CommandParameter="#FFFFFF" />
+     </Border.GestureRecognizers>
+ </Border>
+            
+    <!-- Red -->
+ <Border WidthRequest="32"
+        HeightRequest="32"
+           Background="#F44336"
+          Stroke="{DynamicResource InputBorderColor}"
+     StrokeThickness="1"
+         StrokeShape="RoundRectangle 6">
+  <Border.GestureRecognizers>
+           <TapGestureRecognizer Tapped="OnPresetColorTapped"
+          CommandParameter="#F44336" />
+          </Border.GestureRecognizers>
+         </Border>
+            
+            <!-- Blue -->
+      <Border WidthRequest="32"
+           HeightRequest="32"
+            Background="#2196F3"
+        Stroke="{DynamicResource InputBorderColor}"
+       StrokeThickness="1"
+           StrokeShape="RoundRectangle 6">
+          <Border.GestureRecognizers>
+          <TapGestureRecognizer Tapped="OnPresetColorTapped"
+     CommandParameter="#2196F3" />
+  </Border.GestureRecognizers>
+ </Border>
+      
+            <!-- Green -->
+            <Border WidthRequest="32"
+      HeightRequest="32"
+         Background="#4CAF50"
+            Stroke="{DynamicResource InputBorderColor}"
+    StrokeThickness="1"
+        StrokeShape="RoundRectangle 6">
+             <Border.GestureRecognizers>
+       <TapGestureRecognizer Tapped="OnPresetColorTapped"
+           CommandParameter="#4CAF50" />
+           </Border.GestureRecognizers>
+     </Border>
+            
+            <!-- Yellow -->
+     <Border WidthRequest="32"
+           HeightRequest="32"
+         Background="#FFEB3B"
+          Stroke="{DynamicResource InputBorderColor}"
+StrokeThickness="1"
+          StrokeShape="RoundRectangle 6">
+      <Border.GestureRecognizers>
+          <TapGestureRecognizer Tapped="OnPresetColorTapped"
+    CommandParameter="#FFEB3B" />
+              </Border.GestureRecognizers>
+  </Border>
+            
+            <!-- Orange -->
+            <Border WidthRequest="32"
+           HeightRequest="32"
+          Background="#FF9800"
+   Stroke="{DynamicResource InputBorderColor}"
+      StrokeThickness="1"
+         StrokeShape="RoundRectangle 6">
+        <Border.GestureRecognizers>
+    <TapGestureRecognizer Tapped="OnPresetColorTapped"
+CommandParameter="#FF9800" />
+</Border.GestureRecognizers>
+     </Border>
+  
+          <!-- Purple -->
+         <Border WidthRequest="32"
+         HeightRequest="32"
+        Background="#9C27B0"
+         Stroke="{DynamicResource InputBorderColor}"
+    StrokeThickness="1"
+     StrokeShape="RoundRectangle 6">
+          <Border.GestureRecognizers>
+       <TapGestureRecognizer Tapped="OnPresetColorTapped"
+  CommandParameter="#9C27B0" />
+                </Border.GestureRecognizers>
+      </Border>
+ </FlexLayout>
+    </VerticalStackLayout>
+</ContentView>
