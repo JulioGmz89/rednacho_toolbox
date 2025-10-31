@@ -2,6 +2,7 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:RedNachoToolbox"
+             xmlns:models="clr-namespace:RedNachoToolbox.Models"
              xmlns:converters="clr-namespace:RedNachoToolbox.Converters"
              x:Class="RedNachoToolbox.App">
     <Application.Resources>
@@ -78,7 +79,7 @@
             </Style>
             
             <!-- Tool Card DataTemplate -->
-            <DataTemplate x:Key="ToolCardTemplate">
+            <DataTemplate x:Key="ToolCardTemplate" x:DataType="models:ToolInfo">
                 <Border BackgroundColor="{DynamicResource CardBackgroundColor}"
                         StrokeThickness="0"
                         Padding="12"
